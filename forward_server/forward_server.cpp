@@ -3,41 +3,35 @@
 //
 #include "forward_server.h"
 #define PORT 7002
-#define QUEUE 20
-#define STOP_SSR  0x11
-#define STAR_SSR  0x22
+#define QUEUE 200
 
-void commandPro(unsigned char command)
-{
-    switch(command)
-    {
-        case STAR_SSR:
-            system("/home/ubuntu/ssr_star_com.sh");
-            break;
-        case STOP_SSR:
-            system("/home/ubuntu/ssr_stop_com.sh");
-            break;
-        default:
-            break;
-    }
-}
+
+pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 int end_=0;
 static int forward_release_num=0;
 static int forward_connect_num=0;
-std::vector<forward_server *> v_forward_server;
+std::map<unsigned int ,forward_server *> v_forward_server;
 void freed_forword()
 {
     while(!end_)
     {
         usleep(1000);
-        for(std::vector<forward_server *>::iterator it=v_forward_server.begin();it!=v_forward_server.end();)
+        pthread_mutex_lock(&mut);
+        for(std::map<unsigned int ,forward_server *>::iterator it=v_forward_server.begin(); ;it++)
         {
-           if((*it)->exit_)
+            if(it==v_forward_server.end()) {
+                pthread_mutex_unlock(&mut);
+                break;
+            }
+            pthread_mutex_unlock(&mut);
+           if(it->second->exit_)
            {
-               printf("freed_forward =%p id=%d\n",(*it),(*it)->id);
-               delete (*it);
+               printf("freed_forward =%p id=%d,first=%d\n",it->second,it->second->id,it->first);
+               delete (it->second);
+               pthread_mutex_lock(&mut);
                v_forward_server.erase(it);
                forward_release_num++;
+               pthread_mutex_unlock(&mut);
                break;
            }
         }
@@ -46,9 +40,10 @@ void freed_forword()
 
 }
 int main() {
+    mut = PTHREAD_MUTEX_INITIALIZER;
     signal(SIGPIPE, SIG_IGN);
     int conn;
-    //std::thread freed_forward_thr(freed_forword);
+    std::thread freed_forward_thr(freed_forword);
     int ss = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in server_sockaddr;
     server_sockaddr.sin_family = AF_INET;
@@ -78,7 +73,7 @@ int main() {
 
         static int g_id=0;
 #if 1
-        struct timeval timeout = {3, 0};//3s
+        struct timeval timeout = {1, 0};//3s
         int ret = setsockopt(conn, SOL_SOCKET, SO_SNDTIMEO,  &timeout, sizeof(timeout));
         if (ret < 0) {
             perror("setsockopt SO_SNDTIMEO");
@@ -99,11 +94,15 @@ int main() {
         getsockopt(conn, SOL_SOCKET,SO_RCVTIMEO, &tv, &optlen);
         printf("id=%d clien tv.tv_sec=%ld,tv_usec=%ld \n",g_id,tv.tv_sec,tv.tv_usec);
 #endif
-        printf("client connect suc,forward_connect_num=%d,forward_release_num=%d\n",forward_connect_num++,forward_release_num);
-        forward_server *forward = new forward_server(conn,g_id++);
+
+        forward_server *forward = new forward_server(conn,g_id);
 
         printf("%s\n", forward->server_ip.c_str());
-        v_forward_server.push_back(forward);
+        pthread_mutex_lock(&mut);
+        v_forward_server.insert(std::pair<unsigned int,forward_server *>(g_id,forward));
+        g_id++;
+        printf("client connect suc,forward_connect_num=%d,forward_release_num=%d\n",forward_connect_num++,forward_release_num);
+        pthread_mutex_unlock(&mut);
     }
     close(ss);
 

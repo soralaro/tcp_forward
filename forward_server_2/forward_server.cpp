@@ -54,7 +54,7 @@ int main() {
     server_sockaddr.sin_family = AF_INET;
     server_sockaddr.sin_port = htons(PORT);
     //printf("%d\n",INADDR_ANY);
-    server_sockaddr.sin_addr.s_addr = inet_addr("172.17.0.240");  ///服务器ip //htonl(INADDR_ANY);
+    server_sockaddr.sin_addr.s_addr = inet_addr("192.168.123.227");  ///服务器ip //htonl(INADDR_ANY);
     if(bind(ss, (struct sockaddr* ) &server_sockaddr, sizeof(server_sockaddr))==-1) {
         perror("bind");
         exit(1);

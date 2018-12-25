@@ -85,7 +85,7 @@ forward_server::forward_server(int socket_int,int g_id) {
     id=g_id;
     server_connect_state=-2;
     server_port=6019;
-    server_ip="172.17.0.240";
+    server_ip="192.168.123.227";
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(server_port);  ///服务器端口
     servaddr.sin_addr.s_addr = inet_addr(server_ip.c_str());  ///服务器ip
