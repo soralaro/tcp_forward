@@ -42,21 +42,25 @@ typedef struct MSG_struct
 class forward_server
 {
 public:
-    forward_server(int socket_int,int g_id);
+    forward_server(int g_id);
+    void init(int socket_int);
     ~forward_server();
     void release();
     std::string server_ip;
     bool exit_;
     static  ThreadPool threadPool;
+    static void forward_pool_int(int max_num);
+    static forward_server * forward_pool_get();
+    static void forward_pool_destroy();
+    int free;
 private:
-
+    static std::vector<forward_server *> forward_Pool;
     static void client_rcv(void *arg);
     static void client_forward(void *arg);
     static void server_rcv(void *arg);
     static void server_forward(void *arg);
     bool server_connect();
     static int send_all(int socket, char *buf,int size);
-    int server_connect_state;
     int client_socket;
     int server_socket;
     struct sockaddr_in servaddr;

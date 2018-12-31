@@ -4,19 +4,56 @@
 #include "../include/forward_server.h"
 
 ThreadPool  forward_server::threadPool;
-forward_server::forward_server(int socket_int,int g_id) {
+std::vector<forward_server *> forward_server::forward_Pool;
+void forward_server::forward_pool_int(int max_num)
+{
+    forward_Pool.resize(max_num);
+    for(int i=0;i<max_num;i++) {
+        forward_Pool[i] = new forward_server(i);
+    }
+}
+forward_server * forward_server::forward_pool_get()
+{
+    for(unsigned int i=0;i<forward_Pool.size();i++) {
+        if(forward_Pool[i]->free)
+        {
+            return forward_Pool[i];
+        }
+    }
+    return NULL;
+}
+void forward_server::forward_pool_destroy()
+{
+    for(unsigned int i=0;i<forward_Pool.size();i++) {
+        forward_Pool[i]->release();
+        delete forward_Pool[i];
+    }
+}
 
-    client_socket=socket_int;
+forward_server::forward_server(int g_id) {
+
     server_socket = socket(AF_INET,SOCK_STREAM, 0);
     end_=false;
     exit_=false;
     id=g_id;
-    server_connect_state=-2;
     server_port=6018;
     server_ip="192.168.123.227";
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(server_port);  ///服务器端口
     servaddr.sin_addr.s_addr = inet_addr(server_ip.c_str());  ///服务器ip
+    client_rcv_end=true;
+    client_forward_end=true;
+    server_rcv_end=true;
+    server_forward_end=true;
+    free=true;
+}
+void forward_server::init(int socket_int) {
+
+    free=false;
+    client_socket=socket_int;
+    server_socket = socket(AF_INET,SOCK_STREAM, 0);
+    end_=false;
+    exit_=false;
     client_rcv_end=true;
     client_forward_end=true;
     server_rcv_end=true;
@@ -54,6 +91,7 @@ void forward_server::release()
     close(client_socket);
     sem_close(&sem_end_);
     printf("id=%d forward_server release end !\n",id);
+    free=true;
 }
 forward_server::~forward_server() {
 
@@ -70,6 +108,7 @@ void forward_server::client_rcv(void *arg) {
         this_class->end_=true;
         this_class->exit_=true;
         this_class->client_rcv_end=true;
+        this_class->release();
         return;
     }
     threadPool.pool_add_worker(client_forward, this_class);
@@ -128,6 +167,7 @@ void forward_server::client_rcv(void *arg) {
     printf("id=%d client_rcv exit!\n",this_class->id);
     this_class->client_rcv_end=true;
     this_class->exit_=true;
+    this_class->release();
 }
 
 void  forward_server::server_forward(void *arg) {
@@ -292,7 +332,6 @@ bool forward_server::server_connect()
 
 #endif
         printf("id =%d ,server connect suc \n",id);
-        server_connect_state = 1;
     }
     printf("id =%d server_connect exit \n",id);
     return true;
