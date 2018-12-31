@@ -1,11 +1,9 @@
 //
-// Created by czx on 18-12-16.
+// Created by czx on 18-12-30.
 //
-#include "forward_server.h"
+#include "../include/forward_server.h"
 #define PORT 7002
 #define QUEUE 200
-
-
 pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 int end_=0;
 static int forward_release_num=0;
@@ -15,7 +13,7 @@ void freed_forword()
 {
     while(!end_)
     {
-        usleep(1000);
+        usleep(100000);
         pthread_mutex_lock(&mut);
         for(std::map<unsigned int ,forward_server *>::iterator it=v_forward_server.begin(); ;it++)
         {
@@ -24,24 +22,28 @@ void freed_forword()
                 break;
             }
             pthread_mutex_unlock(&mut);
-           if(it->second->exit_)
-           {
-               printf("freed_forward =%p id=%d,first=%d\n",it->second,it->second->id,it->first);
-               delete (it->second);
-               pthread_mutex_lock(&mut);
-               v_forward_server.erase(it);
-               forward_release_num++;
-               pthread_mutex_unlock(&mut);
-               break;
-           }
+            forward_server * forwardServer=it->second;
+            if(forwardServer->exit_)
+            {
+                forwardServer->release();
+                printf("freed_forward =%p id=%d,first=%d\n",forwardServer,forwardServer->id,it->first);
+                pthread_mutex_lock(&mut);
+                v_forward_server.erase(it);
+                forward_release_num++;
+                pthread_mutex_unlock(&mut);
+                delete forwardServer;
+                break;
+            }
         }
 
     }
 
 }
+
 int main() {
     mut = PTHREAD_MUTEX_INITIALIZER;
     signal(SIGPIPE, SIG_IGN);
+    forward_server::threadPool.pool_init(100);
     int conn;
     std::thread freed_forward_thr(freed_forword);
     int ss = socket(AF_INET, SOCK_STREAM, 0);
@@ -49,7 +51,7 @@ int main() {
     server_sockaddr.sin_family = AF_INET;
     server_sockaddr.sin_port = htons(PORT);
     //printf("%d\n",INADDR_ANY);
-    server_sockaddr.sin_addr.s_addr = inet_addr("172.17.0.240");  ///服务器ip //htonl(INADDR_ANY);
+    server_sockaddr.sin_addr.s_addr = inet_addr("192.168.123.227");  ///服务器ip //htonl(INADDR_ANY);
     if(bind(ss, (struct sockaddr* ) &server_sockaddr, sizeof(server_sockaddr))==-1) {
         perror("bind");
         exit(1);
@@ -105,6 +107,7 @@ int main() {
         pthread_mutex_unlock(&mut);
     }
     close(ss);
+    forward_server::threadPool.pool_destroy();
 
     return 0;
 }
