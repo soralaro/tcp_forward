@@ -2,6 +2,7 @@
 // Created by czx on 18-12-29.
 //
 #include "../include/thread_pool.h"
+#include "gdb_log.h"
 CThread_pool * ThreadPool::pool=NULL ;
 void ThreadPool::pool_init (int max_thread_num)
 {
@@ -101,7 +102,7 @@ int ThreadPool::pool_destroy ()
 
 void * ThreadPool::thread_routine (void *arg)
 {
-    printf ("starting thread 0x%lu\n", pthread_self ());
+    DGDBG ("starting thread 0x%lu\n", pthread_self ());
     while (1)
     {
         pthread_mutex_lock (&(pool->queue_lock));
@@ -109,7 +110,7 @@ void * ThreadPool::thread_routine (void *arg)
         pthread_cond_wait是一个原子操作，等待前会解锁，唤醒后会加锁*/
         while (pool->cur_queue_size == 0 && !pool->shutdown)
         {
-            printf ("thread 0x%lu is waiting\n", pthread_self ());
+         //   DGDBG ("thread 0x%lu is waiting\n", pthread_self ());
             pthread_cond_wait (&(pool->queue_ready), &(pool->queue_lock));
         }
 
@@ -118,11 +119,11 @@ void * ThreadPool::thread_routine (void *arg)
         {
             /*遇到break,continue,return等跳转语句，千万不要忘记先解锁*/
             pthread_mutex_unlock (&(pool->queue_lock));
-            printf ("thread 0x%lu will exit\n", pthread_self ());
+        //    DGDBG ("thread 0x%lu will exit\n", pthread_self ());
             pthread_exit (NULL);
         }
 
-        printf ("thread 0x%lu is starting to work\n", pthread_self ());
+       // DGDBG ("thread 0x%lu is starting to work\n", pthread_self ());
 
         /*assert是调试的好帮手*/
         assert (pool->cur_queue_size != 0);
@@ -148,7 +149,7 @@ void * ThreadPool::thread_routine (void *arg)
 
 void * myprocess (void *arg)
 {
-    printf ("threadid is 0x%x, working on task %d\n", pthread_self (),*(int *) arg);
+    DGDBG ("threadid is 0x%x, working on task %d\n", pthread_self (),*(int *) arg);
     sleep (1);/*休息一秒，延长任务的执行时间*/
     return NULL;
 }

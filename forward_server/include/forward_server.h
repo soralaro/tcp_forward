@@ -21,6 +21,7 @@
 #include <signal.h>
 #include <netinet/tcp.h>
 #include <map>
+#include "gdb_log.h"
 #include "thread_pool.h"
 #include "block_queue.h"
 #define BUFFER_SIZE 1024
@@ -55,6 +56,7 @@ public:
     int free;
 private:
     static std::vector<forward_server *> forward_Pool;
+    static void data_cover(unsigned char *buf, int len);
     static void client_rcv(void *arg);
     static void client_forward(void *arg);
     static void server_rcv(void *arg);
