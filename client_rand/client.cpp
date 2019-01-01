@@ -76,7 +76,7 @@ int main(int argc, char** argv)
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(MYPORT);  ///服务器端口
-    servaddr.sin_addr.s_addr = inet_addr("45.62.126.40");  ///服务器ip
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");  ///服务器ip
     while(1) {
         //连接服务器，成功返回0，错误返回-1
         if (connect(sock_cli, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
