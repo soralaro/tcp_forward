@@ -244,7 +244,7 @@ void forward_server::server_rcv(void *arg) {
 
             int info_len=sizeof(info);
 
-            getsockopt(this_class->client_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
+            getsockopt(this_class->server_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
             if(info.tcpi_state!=TCP_ESTABLISHED)
             {
                // DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);

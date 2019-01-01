@@ -138,16 +138,23 @@ void forward_server::client_rcv(void *arg) {
         else if(len==0)
         {
             delete [] buffer;
+            break;
             // DGDBG("id=%d,client recv time out\n",this_class->id);
         }
 #endif
         else
         {
             delete [] buffer;
-           // DGDBG("id =%d client recv erro \n",this_class->id);
-        }
-        if(len<=0)
-        {
+            DGDBG("id =%d client recv erro \n",this_class->id);
+            if(errno == EAGAIN||errno == EWOULDBLOCK||errno == EINTR)
+            {
+                usleep(1000);
+                DGDBG("id =%d client_rcv erro=%d \n",this_class->id,errno);
+            } else
+            {
+                break;
+            }
+#if 0
             struct tcp_info info;
 
             int info_len=sizeof(info);
@@ -159,6 +166,7 @@ void forward_server::client_rcv(void *arg) {
                 break;
             }
             usleep(1000);
+#endif
         }
     }
 
@@ -229,7 +237,8 @@ void forward_server::server_rcv(void *arg) {
         else if(len==0)
         {
             delete[] buffer;
-            usleep(1000);
+            //usleep(1000);
+            break;
             // DGDBG("id=%d,server_rcv,time out\n",this_class->id);
         }
 #endif
@@ -237,20 +246,25 @@ void forward_server::server_rcv(void *arg) {
             delete[] buffer;
             usleep(1000);
           //  DGDBG("id =%d server ,rcv len <0\n",this_class->id);
-        }
-        if(len<=0)
-        {
+            if(errno == EAGAIN||errno == EWOULDBLOCK||errno == EINTR)
+            {
+                usleep(1000);
+                DGDBG("id =%d server_rcv erro=%d \n",this_class->id,errno);
+            } else
+            {
+               break;
+            }
+#if 0
             struct tcp_info info;
 
             int info_len=sizeof(info);
-
-            getsockopt(this_class->client_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
+            getsockopt(this_class->server_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
             if(info.tcpi_state!=TCP_ESTABLISHED)
             {
                // DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
                 break;
             }
-            usleep(1000);
+#endif
         }
     }
     this_class->end_=true;
