@@ -1,6 +1,8 @@
 //
 // Created by czx on 18-12-16.
 //
+
+#include"omp.h"
 #include "../include/forward_server.h"
 
 ThreadPool  forward_server::threadPool;
@@ -31,6 +33,7 @@ void forward_server::forward_pool_destroy()
 }
 void forward_server::data_cover(unsigned char *buf, int len)
 {
+    //#pragma omp parallel for num_threads(4)
     for(int i=0;i<len;i++)
     {
         buf[i]=(buf[i]^0xAB);
@@ -38,28 +41,23 @@ void forward_server::data_cover(unsigned char *buf, int len)
 }
 forward_server::forward_server(int g_id) {
 
-    server_socket = socket(AF_INET,SOCK_STREAM, 0);
     end_=false;
-    exit_=false;
     id=g_id;
-    server_port=7002;
-    server_ip="18.218.104.241";
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(server_port);  ///服务器端口
-    servaddr.sin_addr.s_addr = inet_addr(server_ip.c_str());  ///服务器ip
     client_rcv_end=true;
     client_forward_end=true;
     server_rcv_end=true;
     server_forward_end=true;
     free=true;
 }
-void forward_server::init(int socket_int) {
+void forward_server::init(int socket_int,std::string ip ,int port) {
 
     free=false;
     client_socket=socket_int;
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(port);  ///服务器端口
+    servaddr.sin_addr.s_addr = inet_addr(ip.c_str());  ///服务器ip
     server_socket = socket(AF_INET,SOCK_STREAM, 0);
     end_=false;
-    exit_=false;
     client_rcv_end=true;
     client_forward_end=true;
     server_rcv_end=true;
@@ -71,8 +69,6 @@ void forward_server::release()
 {
     DGDBG("id=%d forward_server release start !\n",id);
     end_=true;
-    exit_=true;
-
 
     while(!q_client_msg.empty())
     {
@@ -112,7 +108,6 @@ void forward_server::client_rcv(void *arg) {
     if(this_class->server_connect()==false)
     {
         this_class->end_=true;
-        this_class->exit_=true;
         this_class->client_rcv_end=true;
         this_class->release();
         return;
@@ -137,14 +132,14 @@ void forward_server::client_rcv(void *arg) {
 #if 1
         else if(len==0)
         {
-            delete [] buffer;
+            delete[] buffer;
             break;
             // DGDBG("id=%d,client recv time out\n",this_class->id);
         }
 #endif
         else
         {
-            delete [] buffer;
+            delete[] buffer;
             DGDBG("id =%d client recv erro \n",this_class->id);
             if(errno == EAGAIN||errno == EWOULDBLOCK||errno == EINTR)
             {
@@ -182,7 +177,6 @@ void forward_server::client_rcv(void *arg) {
     }
     DGDBG("id=%d client_rcv exit!\n",this_class->id);
     this_class->client_rcv_end=true;
-    this_class->exit_=true;
     this_class->release();
 }
 
@@ -199,7 +193,7 @@ void  forward_server::server_forward(void *arg) {
         }
         char *buf=(char *)Msg.msg;
         int ret = send_all(this_class->server_socket, buf, Msg.size);
-        delete [] buf;
+        delete[] buf;
         if (ret < 0) {
             //DGDBG("id =%d send <0,server_forward\n",this_class->id);
             close(this_class->server_socket);
@@ -286,7 +280,7 @@ void  forward_server::client_forward(void *arg) {
         }
         char *buf=(char *)Msg.msg;
         int ret = send_all(this_class->client_socket, buf, Msg.size);
-        delete [] buf;
+        delete[] buf;
         if (ret < 0) {
             close(this_class->client_socket);
           //  DGDBG("id =%d client forward send_all <0,close ,server_socket,client_socket\n",this_class->id);

@@ -44,11 +44,9 @@ class forward_server
 {
 public:
     forward_server(int g_id);
-    void init(int socket_int);
+    void init(int socket_int,std::string ip ,int port);
     ~forward_server();
     void release();
-    std::string server_ip;
-    bool exit_;
     static  ThreadPool threadPool;
     static void forward_pool_int(int max_num);
     static forward_server * forward_pool_get();
@@ -66,7 +64,6 @@ private:
     int client_socket;
     int server_socket;
     struct sockaddr_in servaddr;
-    int server_port;
 private:
     BlockQueue<MSG> q_server_msg;
     BlockQueue<MSG> q_client_msg;

@@ -4,6 +4,49 @@
 #include "../include/thread_pool.h"
 #include "gdb_log.h"
 CThread_pool * ThreadPool::pool=NULL ;
+void get_thread_stacksize_for_attr(pthread_attr_t * p_pattr)
+{
+    int status = 0;
+    size_t size = 0;
+    status = pthread_attr_getstacksize(p_pattr, &size);
+    if(0 != status)
+    {
+        DGDBG("pthread_attr_getstacksize err [%d]\n",status);
+        return;
+    }
+    DGDBG("current thread stack size:%lu\n", size);
+    return ;
+}
+void get_thread_stacksize()
+{
+    pthread_attr_t pattr;
+    int status = 0;
+    size_t size = 0;
+    //printf("default size:%d\n", size);
+    status = pthread_attr_getstacksize(&pattr, &size);
+    if(0 != status)
+    {
+        DGDBG("pthread_attr_getstacksize err [%d]\n",status);
+        return ;
+    }
+    DGDBG("current thread stack size:%lu\n", size);
+    return ;
+}
+void set_thread_stacksize(pthread_attr_t * p_pthread_attr_t,size_t size)
+{
+    //pthread_attr_t pattr;
+    int status = 0;
+    //printf("default size:%d\n", size);
+    status = pthread_attr_setstacksize(p_pthread_attr_t, size);
+    if(0 != status)
+    {
+        DGDBG("pthread_attr_getstacksize err [%d]\n",status);
+        return ;
+    }
+    DGDBG("set thread stack size:%lu\n", size);
+    return ;
+}
+#
 void ThreadPool::pool_init (int max_thread_num)
 {
     pool = (CThread_pool *) malloc (sizeof (CThread_pool));
@@ -19,10 +62,18 @@ void ThreadPool::pool_init (int max_thread_num)
     pool->shutdown = 0;
 
     pool->threadid = (pthread_t *) malloc (max_thread_num * sizeof (pthread_t));
+
+    pthread_attr_t pattr;
+    pthread_attr_init(&pattr);
+    /* 设置线程栈大小为1M */
+    set_thread_stacksize(&pattr,1024*1024);
+    get_thread_stacksize_for_attr(&pattr);
     int i = 0;
     for (i = 0; i < max_thread_num; i++)
     {
+        set_thread_stacksize(&pattr,1024*1024);
         pthread_create (&(pool->threadid[i]), NULL, thread_routine,NULL);
+        get_thread_stacksize();
     }
 }
 
