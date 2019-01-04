@@ -7,6 +7,7 @@
 
 ThreadPool  forward_server::threadPool;
 std::vector<forward_server *> forward_server::forward_Pool;
+unsigned  char forward_server::encryp_key=0xA5;
 void forward_server::forward_pool_int(int max_num)
 {
     forward_Pool.resize(max_num);
@@ -24,6 +25,11 @@ forward_server * forward_server::forward_pool_get()
     }
     return NULL;
 }
+
+void forward_server::setKey(unsigned  char input_key)
+{
+    encryp_key=input_key;
+}
 void forward_server::forward_pool_destroy()
 {
     for(unsigned int i=0;i<forward_Pool.size();i++) {
@@ -36,7 +42,7 @@ void forward_server::data_cover(unsigned char *buf, int len)
     //#pragma omp parallel for num_threads(4)
     for(int i=0;i<len;i++)
     {
-        buf[i]=(buf[i]^0xAB);
+        buf[i]=(buf[i]^encryp_key);
     }
 }
 forward_server::forward_server(int g_id) {

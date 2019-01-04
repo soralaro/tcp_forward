@@ -8,10 +8,11 @@
 #define SERVER_PORT 7002
 #define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 30
+#define ENCRYP_KEY  0XA5
 
 int main() {
     signal(SIGPIPE, SIG_IGN);
-
+    forward_server::setKey(ENCRYP_KEY);
     forward_server::threadPool.pool_init(MAX_CONNECT*4);
     forward_server::forward_pool_int(MAX_CONNECT);
     int conn;

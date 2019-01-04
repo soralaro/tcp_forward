@@ -51,7 +51,9 @@ public:
     static void forward_pool_int(int max_num);
     static forward_server * forward_pool_get();
     static void forward_pool_destroy();
+    static void setKey(unsigned  char input_key);
     int free;
+    int id;
 private:
     static std::vector<forward_server *> forward_Pool;
     static void data_cover(unsigned char *buf, int len);
@@ -73,8 +75,7 @@ private:
     bool server_forward_end;
     sem_t sem_end_;
     bool end_;
-public:
-    int id;
+    static  unsigned  char encryp_key;
 private:
 };
 
