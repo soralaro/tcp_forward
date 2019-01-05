@@ -31,6 +31,8 @@ void server::init(int socket_int,std::string ip ,int port) {
     servaddr.sin_port = htons(port);  ///服务器端口
     servaddr.sin_addr.s_addr = inet_addr(ip.c_str());  ///服务器ip
     server_socket = socket(AF_INET,SOCK_STREAM, 0);
+    threadPool::pool_add_worker(server_rcv, this);
+    threadPool::pool_add_worker(server_forward, this);
 
 }
 void server::release()
@@ -41,13 +43,11 @@ void server::release()
 server::~server() {
 
     DGDBG("id=%d,~ard\n",id);
-
 }
 
 
 void  server::server_forward(void *arg) {
     forward *this_class = (forward *)arg;
-    this_class->server_forward_end=false;
     signal(SIGPIPE, SIG_IGN);
     DGDBG("id =%d server_forward start \n",this_class->id);
     while (!this_class->end_) {
@@ -77,10 +77,17 @@ void  server::server_forward(void *arg) {
 void server::server_rcv(void *arg) {
 
     forward *this_class = (forward *)arg;
-    this_class->server_rcv_end=false;
     DGDBG("id=%d server_rcv star! \n",this_class->id);
     while (!this_class->end_)
     {
+        if(!connect_state)
+        {
+            if(!server_connect())
+            {
+                sleep(1);
+                continue;
+            }
+        }
         char *buffer = new char[BUFFER_SIZE];
         int len = recv(this_class->server_socket, buffer,BUFFER_SIZE, 0);
         if (len > 0) {
@@ -92,43 +99,23 @@ void server::server_rcv(void *arg) {
             Msg.size = len;
             this_class->q_server_msg.push(Msg);
         }
-#if 1
-        else if(len==0)
+        else
         {
-            delete[] buffer;
-            //usleep(1000);
-            break;
-            // DGDBG("id=%d,server_rcv,time out\n",this_class->id);
-        }
-#endif
-        else  {
-            delete[] buffer;
-            usleep(1000);
-          //  DGDBG("id =%d server ,rcv len <0\n",this_class->id);
-            if(errno == EAGAIN||errno == EWOULDBLOCK||errno == EINTR)
-            {
-                usleep(1000);
-                DGDBG("id =%d server_rcv erro=%d \n",this_class->id,errno);
-            } else
-            {
-               break;
-            }
-#if 0
             struct tcp_info info;
 
             int info_len=sizeof(info);
+
             getsockopt(this_class->server_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
             if(info.tcpi_state!=TCP_ESTABLISHED)
             {
                // DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
-                break;
+                close(this_class->server_socket);
+                connect_state=false;
             }
-#endif
+            usleep(1000);
         }
     }
-    this_class->end_=true;
     DGDBG("id =%d server_rcv exit \n",this_class->id);
-    this_class->server_rcv_end=true;
     sem_post(&this_class->sem_end_);
 }
 
@@ -186,6 +173,7 @@ bool server::server_connect()
 
 #endif
         DGDBG("id =%d ,server connect suc \n",id);
+        connect_state=true;
     }
     DGDBG("id =%d server_connect exit \n",id);
     return true;

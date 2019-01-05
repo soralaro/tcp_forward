@@ -46,7 +46,7 @@ class server
 public:
     server();
     void init(int socket_int,std::string ip ,int port);
-    ~server();
+    ~server(){};
     void release();
     static void setKey(unsigned  char input_key);
     int id;
@@ -61,12 +61,19 @@ private:
 private:
     BlockQueue<MSG> q_server_msg;
     BlockQueue<MSG> q_client_msg;
-    bool server_rcv_end;
-    bool server_forward_end;
+    bool connect_state;
+    bool end_;
     static  unsigned  char encryp_key;
 private:
 };
-
+server::server()
+{
+    end_=false;
+    id=0;
+    connect_state=false;
+    server_socket=0;
+    memset(&servaddr,0,sizeof(servaddr));
+}
 
 
 #endif //PROJECT_FORWAR_SERVER_H
