@@ -3,8 +3,7 @@
 //
 
 #include"omp.h"
-#include "../include/forward.h"
-
+#include "../include/server.h"
 
 
 void server::setKey(unsigned  char input_key)
@@ -20,19 +19,15 @@ void server::data_cover(unsigned char *buf, int len)
         buf[i]=(buf[i]^encryp_key);
     }
 }
-server::server(int g_id) {
 
+void server::init(std::string ip ,int port) {
 
-}
-void server::init(int socket_int,std::string ip ,int port) {
-
-    client_socket=socket_int;
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(port);  ///服务器端口
     servaddr.sin_addr.s_addr = inet_addr(ip.c_str());  ///服务器ip
     server_socket = socket(AF_INET,SOCK_STREAM, 0);
-    threadPool::pool_add_worker(server_rcv, this);
-    threadPool::pool_add_worker(server_forward, this);
+    ThreadPool::pool_add_worker(server_rcv, this);
+    ThreadPool::pool_add_worker(server_forward, this);
 
 }
 void server::release()
@@ -40,17 +35,18 @@ void server::release()
     close(server_socket);
     DGDBG("id=%d release end !\n",id);
 }
-server::~server() {
-
-    DGDBG("id=%d,~ard\n",id);
-}
 
 
 void  server::server_forward(void *arg) {
-    forward *this_class = (forward *)arg;
+    server *this_class = (server *)arg;
     signal(SIGPIPE, SIG_IGN);
+    std::unique_lock<std::mutex> mlock(this_class->mutex_connect);
     DGDBG("id =%d server_forward start \n",this_class->id);
     while (!this_class->end_) {
+        while(!this_class->connect_state)
+        {
+            this_class->cond_connect.wait(mlock);
+        }
         MSG Msg;
         this_class->q_client_msg.pop(Msg);
         if( Msg.type==MSG_TPY::msg_socket_end) {
@@ -60,37 +56,42 @@ void  server::server_forward(void *arg) {
         int ret = send_all(this_class->server_socket, buf, Msg.size);
         delete[] buf;
         if (ret < 0) {
-            //DGDBG("id =%d send <0,server_forward\n",this_class->id);
+            DGDBG("id =%d send <0,server_forward\n",this_class->id);
             close(this_class->server_socket);
-            break;
+            this_class->connect_state=false;
         } else {
-           // DGDBG("server_forwar =%d\n",Msg.size);
+            DGDBG("server_forwar =%d\n",Msg.size);
         }
 
     }
-    this_class->end_=true;
     DGDBG("id =%d server_forward exit \n",this_class->id);
-    this_class->server_forward_end=true;
-    sem_post(&this_class->sem_end_);
 }
 
 void server::server_rcv(void *arg) {
 
-    forward *this_class = (forward *)arg;
+    server *this_class = (server *)arg;
     DGDBG("id=%d server_rcv star! \n",this_class->id);
     while (!this_class->end_)
     {
-        if(!connect_state)
+        if(!this_class->connect_state)
         {
-            if(!server_connect())
+            if(!this_class->server_connect())
             {
                 sleep(1);
                 continue;
             }
         }
-        char *buffer = new char[BUFFER_SIZE];
+        unsigned int size=BUFFER_SIZE;
+        char *buffer =(char *) this_class->ringBuffer.alloc(size);
+        if(size==0)
+        {
+            DGERR("ringBuffer is full !");
+            usleep(1000);
+            continue;
+        }
         int len = recv(this_class->server_socket, buffer,BUFFER_SIZE, 0);
         if (len > 0) {
+            this_class->ringBuffer.r_back(size-len);
             // DGDBG("server recv len%d\n", len);
             data_cover((unsigned char *)buffer, len);
             MSG Msg;
@@ -101,6 +102,7 @@ void server::server_rcv(void *arg) {
         }
         else
         {
+            this_class->ringBuffer.r_back(size);
             struct tcp_info info;
 
             int info_len=sizeof(info);
@@ -110,13 +112,12 @@ void server::server_rcv(void *arg) {
             {
                // DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
                 close(this_class->server_socket);
-                connect_state=false;
+                this_class->connect_state=false;
             }
             usleep(1000);
         }
     }
     DGDBG("id =%d server_rcv exit \n",this_class->id);
-    sem_post(&this_class->sem_end_);
 }
 
 
@@ -174,6 +175,9 @@ bool server::server_connect()
 #endif
         DGDBG("id =%d ,server connect suc \n",id);
         connect_state=true;
+        std::unique_lock<std::mutex> mlock(mutex_connect);
+        mlock.unlock();
+        cond_connect.notify_all();
     }
     DGDBG("id =%d server_connect exit \n",id);
     return true;

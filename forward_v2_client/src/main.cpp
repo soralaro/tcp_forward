@@ -2,6 +2,7 @@
 // Created by czx on 18-12-30.
 //
 #include "../include/forward.h"
+#include "../include/server.h"
 #define ListenQueue 200
 
 #define LOCAL_PORT 7001
@@ -13,8 +14,10 @@
 int main() {
     signal(SIGPIPE, SIG_IGN);
     forward::setKey(ENCRYP_KEY);
-    forward::threadPool.pool_init(MAX_CONNECT*4);
+    ThreadPool::pool_init(MAX_CONNECT*4);
     forward::forward_pool_int(MAX_CONNECT);
+    server Server;
+    Server.init(SERVER_IP,SERVER_PORT);
     int conn;
     int ss = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in local_sockaddr;
@@ -63,7 +66,8 @@ int main() {
 
         forward *forward = forward::forward_pool_get();
         if(forward!=NULL) {
-            forward->init(conn,SERVER_IP,SERVER_PORT);
+            static unsigned  int id=0;
+            forward->init(id++,conn,&Server);
             printf("new connect id=%d \n",forward->id);
         } else
         {
@@ -71,7 +75,7 @@ int main() {
         }
     }
     close(ss);
-    forward::threadPool.pool_destroy();
+    ThreadPool.pool_destroy();
     forward::forward_pool_destroy();
 
     return 0;
