@@ -2,19 +2,26 @@
 // Created by czx on 18-12-30.
 //
 #include "../include/forward.h"
+#include "../include/server.h"
 #define ListenQueue 200
 
 #define LOCAL_PORT 7001
 #define SERVER_PORT 7002
 #define SERVER_IP "127.0.0.1"
-#define MAX_CONNECT 30
+#define MAX_CONNECT 200
+#define MAX_DEVICE  10
 #define ENCRYP_KEY  0XA5
 
 int main() {
     signal(SIGPIPE, SIG_IGN);
     forward::setKey(ENCRYP_KEY);
-    forward::threadPool.pool_init(MAX_CONNECT*4);
-    forward::forward_pool_int(MAX_CONNECT);
+    ThreadPool::pool_init(MAX_CONNECT+MAX_DEVICE*2);
+    server::server_pool_int(MAX_DEVICE);
+    struct sockaddr_in servaddr;
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(SERVER_PORT);  ///服务器端口
+    servaddr.sin_addr.s_addr = inet_addr(SERVER_IP);  ///服务器ip
+    forward::forward_pool_int(MAX_CONNECT,servaddr);
     int conn;
     int ss = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in local_sockaddr;
@@ -61,18 +68,19 @@ int main() {
         getsockopt(conn, SOL_SOCKET,SO_RCVTIMEO, &tv, &optlen);
 #endif
 
-        forward *forward = forward::forward_pool_get();
-        if(forward!=NULL) {
-            forward->init(conn,SERVER_IP,SERVER_PORT);
-            printf("new connect id=%d \n",forward->id);
+        server *Server = server::server_pool_get();
+        if(Server!=NULL) {
+            static unsigned  int id=0;
+            Server->init(id++,conn,SERVER_IP,SERVER_PORT);
+            printf("new connect id=%d \n",Server->id);
         } else
         {
             close(conn);
         }
     }
     close(ss);
-    forward::threadPool.pool_destroy();
+    ThreadPool::pool_destroy();
     forward::forward_pool_destroy();
-
+    server::server_pool_destroy();
     return 0;
 }

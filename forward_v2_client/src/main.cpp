@@ -14,7 +14,7 @@
 int main() {
     signal(SIGPIPE, SIG_IGN);
     forward::setKey(ENCRYP_KEY);
-    ThreadPool::pool_init(MAX_CONNECT*4);
+    ThreadPool::pool_init(MAX_CONNECT+2);
     forward::forward_pool_int(MAX_CONNECT);
     server Server;
     Server.init(SERVER_IP,SERVER_PORT);

@@ -26,6 +26,7 @@
 #include "block_queue.h"
 #include "command.h"
 #include "ringbuf.h"
+#include "../include/command_process.h"
 
 class server
 {
@@ -36,9 +37,7 @@ public:
     void release();
     static void setKey(unsigned  char input_key);
     int id;
-    BlockQueue<MSG> q_server_msg;
     BlockQueue<MSG> q_client_msg;
-    RingBuffer ringBuffer;
 private:
     static void data_cover(unsigned char *buf, int len);
     static void server_rcv(void *arg);
@@ -52,6 +51,7 @@ private:
     bool connect_state;
     bool end_;
     static  unsigned  char encryp_key;
+    command_process commandProcess;
 private:
     std::mutex mutex_connect;
     std::condition_variable cond_connect;

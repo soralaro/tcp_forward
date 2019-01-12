@@ -51,12 +51,10 @@ forward::forward() {
     destroy=false;
     id=0;
     client_rcv_end=true;
-    client_forward_end=true;
 
     mServer=NULL;
     client_socket=-1;
     ThreadPool::pool_add_worker(client_rcv, this);
-    ThreadPool::pool_add_worker(client_forward, this);
 }
 void forward::init(unsigned int g_id,int socket_int,server *pServer) {
     id=g_id;
@@ -64,7 +62,6 @@ void forward::init(unsigned int g_id,int socket_int,server *pServer) {
     client_socket=socket_int;
     end_=false;
     client_rcv_end=true;
-    client_forward_end=true;
     mServer=pServer;
     std::unique_lock<std::mutex> mlock(mutex_client_socket);
     mlock.unlock();
@@ -74,29 +71,20 @@ void forward::release()
 {
     DGDBG("id=%d forward release start !\n",id);
     end_=true;
-
-
-    while(!q_server_msg.empty())
+    while (client_rcv_end)
     {
-        MSG Msg;
-        q_server_msg.pop(Msg);
-        if(Msg.msg!=NULL) {
-            char *buf = (char *) Msg.msg;
-            delete[] buf;
-        }
+        usleep(1000);
     }
+
     close(client_socket);
     client_socket=-1;
-    sem_close(&sem_end_);
     DGDBG("id=%d forward release end !\n",id);
     id=0;
     free=true;
-    cond_free.notify_all();
 }
 forward::~forward() {
 
     DGDBG("id=%d,~forward\n",id);
-    sem_close(&sem_end_);
 }
 
 void forward::client_rcv(void *arg) {
@@ -106,124 +94,78 @@ void forward::client_rcv(void *arg) {
     std::unique_lock<std::mutex> mlock(this_class->mutex_client_socket);
     while (!this_class->destroy) {
         this_class->cond_client_socket.wait(mlock);
-        while (!this_class->free) {
-            std::unique_lock<std::mutex> mlock_free(this_class->mutex_free);
-            this_class->cond_free.wait(mlock_free);
-            while (!this_class->end_) {
-                char *buffer = new char[BUFFER_SIZE];
-                int len = recv(this_class->client_socket, buffer+sizeof(COMMANT), BUFFER_SIZE-sizeof(COMMANT), 0);
-                if (len > 0) {
-                    // DGDBG("client recv len%d\n", len);
-                    data_cover((unsigned char *) buffer, len);
-
-                    MSG Msg;
-                    Msg.type = MSG_TPY::msg_client_rcv;
-                    Msg.from=this_class;
-                    Msg.msg = buffer;
-                    COMMANT *commant=(COMMANT *) buffer;
-                    commant->size=sizeof(COMMANT)+len;
-                    commant->com=(unsigned int)socket_command::Data;
-                    commant->socket_id=this_class->id;
-                    this_class->mServer->q_client_msg.push(Msg);
-                }
-                else {
-                    delete[] buffer;
-                    DGDBG("id =%d client recv erro \n", this_class->id);
-
-                    struct tcp_info info;
-
-                    int info_len=sizeof(info);
-
-                    getsockopt(this_class->client_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
-                    if(info.tcpi_state!=TCP_ESTABLISHED)
-                    {
-                       // DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
-                        break;
-                    }
-                    usleep(1000);
-                }
-            }
-            this_class->end_=true;
-            MSG Msg;
-            Msg.type = MSG_TPY::msg_socket_end;
-            Msg.msg = NULL;
-            Msg.size = 0;
-            this_class->q_server_msg.push(Msg);
-
-            Msg.type = MSG_TPY::msg_client_rcv;
+        while (!this_class->end_) {
             char *buffer = new char[BUFFER_SIZE];
-            Msg.from=this_class;
-            Msg.msg = buffer;
-            COMMANT *commant=(COMMANT *) buffer;
-            commant->size=sizeof(COMMANT);
-            commant->com=(unsigned int)socket_command::dst_connetc;
-            commant->socket_id=this_class->id;
-            this_class->mServer->q_client_msg.push(Msg);
+            int len = recv(this_class->client_socket, buffer+sizeof(COMMANT), BUFFER_SIZE-sizeof(COMMANT), 0);
+            if (len > 0) {
+                // DGDBG("client recv len%d\n", len);
+                data_cover((unsigned char *) buffer, len);
 
-            while(!(this_class->client_forward_end)) {
-                sem_wait(&this_class->sem_end_);
-            }
-            DGDBG("id=%d client_rcv exit!\n",this_class->id);
-            this_class->client_rcv_end=true;
-            this_class->release();
-        }
-    }
-
-
-}
-
-
-
-void  forward::client_forward(void *arg) {
-    forward *this_class = (forward *)arg;
-    this_class->client_forward_end=false;
-    signal(SIGPIPE, SIG_IGN);
-    DGDBG("id=%d client_forward start! \n",this_class->id);
-    std::unique_lock<std::mutex> mlock(this_class->mutex_client_socket);
-    while (!this_class->destroy) {
-        this_class->cond_client_socket.wait(mlock);
-        while (!this_class->free) {
-            std::unique_lock<std::mutex> mlock_free(this_class->mutex_free);
-            this_class->cond_free.wait(mlock_free);
-            while (!this_class->end_) {
                 MSG Msg;
-                this_class->q_server_msg.pop(Msg);
-                if (Msg.type == MSG_TPY::msg_socket_end) {
-                    break;
-                }
-                char *buf = (char *) Msg.msg;
-                int ret = send_all(this_class->client_socket, buf, Msg.size);
-                delete[] buf;
-                if (ret < 0) {
-                    close(this_class->client_socket);
-                      DGDBG("id =%d client forward send_all <0,close ,server_socket,client_socket\n",this_class->id);
-                    break;
-                } else {
-                    DGDBG("client_forward len=%d\n",Msg.size);
-                }
+                Msg.type = MSG_TPY::msg_client_rcv;
+                Msg.from=this_class;
+                Msg.msg = buffer;
+                COMMANT *commant=(COMMANT *) buffer;
+                commant->size=sizeof(COMMANT)+len;
+                commant->com=(unsigned int)socket_command::Data;
+                commant->socket_id=this_class->id;
+                this_class->mServer->q_client_msg.push(Msg);
             }
-            this_class->end_=true;
-            DGDBG("id=%d client_forward exit! \n",this_class->id);
-            this_class->client_forward_end=true;
-            sem_post(&this_class->sem_end_);
+            else {
+                delete[] buffer;
+                DGDBG("id =%d client recv erro \n", this_class->id);
+
+                struct tcp_info info;
+
+                int info_len=sizeof(info);
+
+                getsockopt(this_class->client_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
+                if(info.tcpi_state!=TCP_ESTABLISHED)
+                {
+                   // DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
+                    break;
+                }
+                usleep(1000);
+            }
         }
+        this_class->end_=true;
+        MSG Msg;
+
+        Msg.type = MSG_TPY::msg_client_rcv;
+        char *buffer = new char[BUFFER_SIZE];
+        Msg.from=this_class;
+        Msg.msg = buffer;
+        COMMANT *commant=(COMMANT *) buffer;
+        commant->size=sizeof(COMMANT);
+        commant->com=(unsigned int)socket_command::dst_connetc;
+        commant->socket_id=this_class->id;
+        this_class->mServer->q_client_msg.push(Msg);
+
+        DGDBG("id=%d client_rcv exit!\n",this_class->id);
+        this_class->client_rcv_end=true;
+        this_class->release();
     }
+
 
 }
 
-int forward::send_all(int socket, char *buf,int size)
+int forward::send_all(char *buf,int size)
 {
     int ret;
+    if(end_)
+        return -1;
     int remain=size;
     int sendedSize=0;
     while(remain>0) {
-        ret = send(socket, buf + sendedSize, remain, 0);
+        ret = send(client_socket, buf + sendedSize, remain, 0);
         if(ret>0)
         {
             sendedSize+=ret;
             remain-=ret;
         } else
         {
+            //close(client_socket);
+            end_=true;
             return -1;
         }
     }

@@ -1,9 +1,8 @@
 //
 // Created by czx on 18-12-19.
 //
-
-#ifndef PROJECT_FORWAR_H
-#define PROJECT_FORWAR_H
+#ifndef PROJECT_SERVER_H
+#define PROJECT_SERVER_H
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
@@ -25,46 +24,41 @@
 #include "thread_pool.h"
 #include "block_queue.h"
 #include "command.h"
+#include "ringbuf.h"
+#include "../include/command_process.h"
 
-
-class forward
+class server
 {
 public:
-    forward(struct sockaddr_in addr);
-    void init(unsigned int g_id,BlockQueue<MSG> *q_msg);
-    ~forward();
+    server();
+    void init(unsigned int g_id,int socket_int,std::string ip ,int port);
+    ~server();
     void release();
-    int send_all(char *buf,int size);
-    static void forward_pool_int(int max_num,struct sockaddr_in addr);
-    static forward * forward_pool_get();
-    static void forward_pool_destroy();
     static void setKey(unsigned  char input_key);
-    void setEnd(){end_=true;};
+    static void server_pool_int(int max_num);
+    static void server_pool_destroy();
+    static server * server_pool_get();
+    int id;
     bool free;
     bool destroy;
-    unsigned int id;
+    BlockQueue<MSG> q_client_msg;
 private:
-    static std::vector<forward *> forward_Pool;
     static void data_cover(unsigned char *buf, int len);
     static void server_rcv(void *arg);
     bool server_connect();
-
-    BlockQueue<MSG> *q_client_msg;
-    int server_socket;
+    static int send_all(int socket, char *buf,int size);
+    int client_socket;
     struct sockaddr_in servaddr;
-
-    bool connect_state;
-    std::mutex mutex_connect;
-    std::condition_variable cond_connect;
-    std::mutex mutex_server_socket;
-    std::condition_variable cond_server_socket;;
 private:
-    bool server_rcv_end;
+    static std::vector<server *> server_Pool;
     bool end_;
     static  unsigned  char encryp_key;
+    command_process *commandProcess;
 private:
+    std::mutex mutex_client_socket;
+    std::condition_variable cond_client_socket;
 };
 
 
 
-#endif //PROJECT_FORWAR_H
+#endif //PROJECT_SERVER_H

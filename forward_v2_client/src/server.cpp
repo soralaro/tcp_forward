@@ -6,6 +6,7 @@
 #include "../include/server.h"
 
 
+
 void server::setKey(unsigned  char input_key)
 {
     encryp_key=input_key;
@@ -81,28 +82,16 @@ void server::server_rcv(void *arg) {
                 continue;
             }
         }
-        unsigned int size=BUFFER_SIZE;
-        char *buffer =(char *) this_class->ringBuffer.alloc(size);
-        if(size==0)
-        {
-            DGERR("ringBuffer is full !");
-            usleep(1000);
-            continue;
-        }
+        static char buffer[BUFFER_SIZE];
+
         int len = recv(this_class->server_socket, buffer,BUFFER_SIZE, 0);
         if (len > 0) {
-            this_class->ringBuffer.r_back(size-len);
             // DGDBG("server recv len%d\n", len);
             data_cover((unsigned char *)buffer, len);
-            MSG Msg;
-            Msg.type = MSG_TPY::msg_server_rcv;
-            Msg.msg = buffer;
-            Msg.size = len;
-            this_class->q_server_msg.push(Msg);
+            this_class->commandProcess.process(buffer,len);
         }
         else
         {
-            this_class->ringBuffer.r_back(size);
             struct tcp_info info;
 
             int info_len=sizeof(info);

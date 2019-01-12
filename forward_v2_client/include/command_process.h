@@ -26,6 +26,7 @@
 #include "block_queue.h"
 #include "command.h"
 #include "ringbuf.h"
+#include "forward.h"
 
 class command_process
 {
@@ -33,6 +34,7 @@ class command_process
         com_wait_star=0,
         com_head_rcv,
         com_head_rcv_end,
+        com_data_rcv,
     }COMMANT_STATE;
 public:
     void command_process();
@@ -43,6 +45,7 @@ private:
     COMMANT commant;
     int commant_cur;
     COMMANT_STATE  state;
+    std::map <unsigned int,forward *> mforward;
 };
 
 void command_process::command_process()
@@ -61,6 +64,8 @@ int command_process::process(unsigned char *data_in, unsigned int len) {
     unsigned char *buf=data_in;
     unsigned int   pro_len=len;
      while (pro_len>0) {
+         MSG Msg;
+         Msg.size=0;
         switch (state) {
             case com_wait_star:
                 if(pro_len>=sizeof(commant)) {
@@ -70,7 +75,7 @@ int command_process::process(unsigned char *data_in, unsigned int len) {
                     state=com_head_rcv_end;
                     commant_cur=sizeof(commant);
                 }
-                else if(pro_len<sizeof(commant))
+                else
                 {
                     memcpy((unsigned char *)(&command), buf, pro_len);
                     buf+=pro_len;
@@ -88,9 +93,9 @@ int command_process::process(unsigned char *data_in, unsigned int len) {
                     state=com_head_rcv_end;
                     commant_cur=sizeof(commant);
                 }
-                else if(pro_len<head_remain)
+                else
                 {
-                    memcpy((unsigned char *)(&command)+commant_cur,, buf, pro_len);
+                    memcpy((unsigned char *)(&command)+commant_cur, buf, pro_len);
                     buf+=pro_len;
                     commant_cur+=pro_len;
                     pro_len=0;
@@ -99,20 +104,49 @@ int command_process::process(unsigned char *data_in, unsigned int len) {
                 break;
 
             case com_head_rcv_end:
-                MSG Msg;
                 Msg.type = MSG_TPY::msg_server_rcv;
                 Msg.msg = buf;
                 unsigned int commant_remain=commant.size-sizeof(commant);
-                if(pro_len>commant_remain) {
+                if(pro_len>=commant_remain) {
                     Msg.size = commant_remain;
+                    buf+=commant_remain;
                     pro_len-=commant_remain;
+                    commant_cur=0;
                     state=com_wait_star;
+                } else
+                {
+                   Msg.size=pro_len;
+                    buf+=pro_len;
+                   pro_len=0;
+                   commant_cur+=pro_len;
+                   state=com_data_rcv;
                 }
-                Msg.size = len;
-
+                break;
+            case com_data_rcv:
+                Msg.type = MSG_TPY::msg_server_rcv;
+                Msg.msg = buf;
+                unsigned int commant_remain=commant.size-sizeof(commant)-commant_cur;
+                if(pro_len>=commant_remain) {
+                    Msg.size = commant_remain;
+                    buf+=commant_remain;
+                    pro_len-=commant_remain;
+                    commant_cur=0;
+                    state=com_wait_star;
+                } else
+                {
+                    Msg.size=pro_len;
+                    buf+=pro_len;
+                    pro_len=0;
+                    commant_cur+=pro_len;
+                    state=com_data_rcv;
+                }
                 break;
             case defaut:
                 break;
+        }
+        if(Msg.size>0)
+        {
+            mforward.at(commant.socket_id)->send_all((char *)Msg.msg,Msg.size);
         }
     }
 }

@@ -47,9 +47,9 @@ class ThreadPool
 public:
     ThreadPool(){};
     ~ThreadPool(){};
-    void pool_init (int max_thread_num);
-    int pool_add_worker (void (*process) (void *arg), void *arg);
-    int pool_destroy ();
+    static void pool_init (int max_thread_num);
+    static int pool_add_worker (void (*process) (void *arg), void *arg);
+    static  int pool_destroy ();
 
     static void * thread_routine (void *arg);
     static ThreadPool *creat(){return new ThreadPool;};
