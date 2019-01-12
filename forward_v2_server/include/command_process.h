@@ -40,25 +40,59 @@ public:
     command_process(BlockQueue<MSG> *q_msg);
     ~command_process();
     void process(unsigned char *data_in, unsigned int len);
+    void relase();
+    void erease_mforwar(unsigned int socket_id );
     BlockQueue<MSG> *q_client_msg;
 private:
     void rcv_comm_process(COMMANT com,MSG Msg);
     COMMANT command;
     int commant_cur;
+    unsigned  int current_max_socket_id;
     COMMANT_STATE  state;
     std::map <unsigned int,forward *> mforward;
 };
 
+void command_process::erease_mforwar(unsigned int socket_id) {
+    auto iter=mforward.find(socket_id);
+    if(iter!=mforward.end())
+    {
+        auto forword = iter->second;
+        forword->setEnd();
+        mforward.erase(iter);
+    }
+}
+
 command_process::command_process(BlockQueue<MSG> *q_msg)
 {
-     state =com_wait_star;
+    state =com_wait_star;
     commant_cur=0;
+    current_max_socket_id=0;
     q_client_msg=q_msg;
 }
 
 command_process::~command_process()
 {
+    auto iter=mforward.find(command.socket_id);
+    for(auto iter=mforward.begin(); iter!=mforward.end(); )
+    {
+        auto forword = iter->second;
+        forword->setEnd();
+        iter=mforward.erase(iter);
+    }
+}
 
+command_process::relase()
+{
+    auto iter=mforward.find(command.socket_id);
+    for(auto iter=mforward.begin(); iter!=mforward.end(); )
+    {
+        auto forword = iter->second;
+        forword->setEnd();
+        iter=mforward.erase(iter);
+    }
+    state =com_wait_star;
+    commant_cur=0;
+    current_max_socket_id=0;
 }
 
 void command_process::process(unsigned char *data_in, unsigned int len) {
@@ -160,16 +194,21 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
             {
                 if(iter==mforward.end())
                 {
+                    if(com.socket_id<=current_max_socket_id)
+                    {
+                        break;
+                    }
                     forward *Forward=forward::forward_pool_get();
                     if(Forward!=NULL)
                     {
-                        Forward->init(command.socket_id,q_client_msg);
-                        Forward->send_all((char *) Msg.msg, Msg.size);
-                        mforward.insert(std::pair <unsigned int,forward *>(command.socket_id,Forward));
+                        current_max_socket_id=com.socket_id;
+                        Forward->init(com.socket_id,q_client_msg);
+                        Forward->send_all(Msg);
+                        mforward.insert(std::pair <unsigned int,forward *>(com.socket_id,Forward));
                     }
                 } else {
                     auto forword = iter->second;
-                    forword->send_all((char *) Msg.msg, Msg.size);
+                    forword->send_all(Msg);
                 }
             }
             break;
@@ -178,12 +217,16 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
         {
             if(iter==mforward.end())
             {
+                if(com.socket_id<=current_max_socket_id)
+                {
+                        break;
+                }
                 forward *Forward=forward::forward_pool_get();
                 if(Forward!=NULL)
                 {
-                    Forward->init(command.socket_id,q_client_msg);
-                    Forward->send_all((char *) Msg.msg, Msg.size);
-                    mforward.insert(std::pair <unsigned int,forward *>(command.socket_id,Forward));
+                    Forward->init(com.socket_id,q_client_msg);
+                    current_max_socket_id=com.socket_id;
+                    mforward.insert(std::pair <unsigned int,forward *>(com.socket_id,Forward));
                 }
             }
             break;

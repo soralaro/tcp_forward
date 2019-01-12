@@ -45,18 +45,24 @@ public:
 private:
     static void data_cover(unsigned char *buf, int len);
     static void server_rcv(void *arg);
+    static void  forward(void *arg);
     bool server_connect();
-    static int send_all(int socket, char *buf,int size);
+    int send_all(char *buf,int size);
     int client_socket;
     struct sockaddr_in servaddr;
 private:
     static std::vector<server *> server_Pool;
+    bool rcv_end;
+    bool forward_end;
     bool end_;
     static  unsigned  char encryp_key;
     command_process *commandProcess;
 private:
     std::mutex mutex_client_socket;
     std::condition_variable cond_client_socket;
+
+    std::mutex mutex_forward_end;
+    std::condition_variable cond_forward_end;
 };
 
 

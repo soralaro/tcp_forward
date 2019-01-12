@@ -8,7 +8,7 @@
 #define SERVER_PORT 7002
 #define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 30
-#define ENCRYP_KEY  0XA5
+#define ENCRYP_KEY  0XAB
 
 int main() {
     signal(SIGPIPE, SIG_IGN);

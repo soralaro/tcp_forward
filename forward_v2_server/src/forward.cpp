@@ -73,7 +73,12 @@ void forward::release()
     {
         usleep(1000);
     }
-
+    while(!q_send_msg.empty())
+    {
+        MSG Msg=q_send_msg.pop();
+        char *buf=(char *)Msg.msg;
+        delete [] buf;
+    }
     close(server_socket);
     server_socket=-1;
     DGDBG("id=%d forward release end !\n",id);
@@ -137,7 +142,7 @@ void forward::server_rcv(void *arg) {
         this_class->end_=true;
         MSG Msg;
 
-        Msg.type = MSG_TPY::msg_client_rcv;
+        Msg.type = MSG_TPY::msg_socket_end;
         char *buffer = new char[BUFFER_SIZE];
         Msg.from=this_class;
         Msg.msg = buffer;
@@ -148,18 +153,26 @@ void forward::server_rcv(void *arg) {
         this_class->q_client_msg->push(Msg);
 
         DGDBG("id=%d client_rcv exit!\n",this_class->id);
-        this_class->cond_server_socket=true;
+        this_class->server_rcv_end=true;
         this_class->release();
     }
 
 
 }
 
-int forward::send_all(char *buf,int size)
+int forward::send_all(MSG Msg)
 {
     int ret;
-    if(end_)
+    char *buf=(char *)(Msg.msg);
+    if(end_) {
+        delete [] buf;
         return -1;
+    }
+    if(connect_state== false)
+    {
+        q_send_msg.push(Msg);
+        return 0;
+    }
     int remain=size;
     int sendedSize=0;
     while(remain>0) {
@@ -172,9 +185,11 @@ int forward::send_all(char *buf,int size)
         {
             //close(client_socket);
             end_=true;
+            delete [] buf;
             return -1;
         }
     }
+    delete [] buf;
     return 1;
 }
 
@@ -215,7 +230,11 @@ bool forward::server_connect()
         std::unique_lock<std::mutex> mlock(mutex_connect);
         mlock.unlock();
         cond_connect.notify_all();
-
+        while(!q_send_msg.empty())
+        {
+            MSG Msg=q_send_msg.pop();
+            send_all(Msg);
+        }
 
     }
 
