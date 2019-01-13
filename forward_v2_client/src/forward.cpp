@@ -51,18 +51,17 @@ forward::forward() {
     destroy=false;
     id=0;
     client_rcv_end=true;
-
-    mServer=NULL;
+    q_client_msg=NULL;
     client_socket=-1;
     ThreadPool::pool_add_worker(client_rcv, this);
 }
-void forward::init(unsigned int g_id,int socket_int,server *pServer) {
+void forward::init(unsigned int g_id,int socket_int,BlockQueue<MSG> *q_msg) {
     id=g_id;
     free=false;
     client_socket=socket_int;
     end_=false;
     client_rcv_end=true;
-    mServer=pServer;
+    q_client_msg=q_msg;
     std::unique_lock<std::mutex> mlock(mutex_client_socket);
     mlock.unlock();
     cond_client_socket.notify_all();
@@ -109,7 +108,7 @@ void forward::client_rcv(void *arg) {
                 commant->size=sizeof(COMMANT)+len;
                 commant->com=(unsigned int)socket_command::Data;
                 commant->socket_id=this_class->id;
-                this_class->mServer->q_client_msg.push(Msg);
+                this_class->q_client_msg->push(Msg);
             }
             else {
                 delete[] buffer;
@@ -131,7 +130,7 @@ void forward::client_rcv(void *arg) {
         this_class->end_=true;
         MSG Msg;
 
-        Msg.type = MSG_TPY::msg_client_rcv;
+        Msg.type = MSG_TPY::msg_socket_end;
         char *buffer = new char[BUFFER_SIZE];
         Msg.from=this_class;
         Msg.msg = buffer;
@@ -139,7 +138,7 @@ void forward::client_rcv(void *arg) {
         commant->size=sizeof(COMMANT);
         commant->com=(unsigned int)socket_command::dst_connetc;
         commant->socket_id=this_class->id;
-        this_class->mServer->q_client_msg.push(Msg);
+        this_class->q_client_msg->push(Msg);
 
         DGDBG("id=%d client_rcv exit!\n",this_class->id);
         this_class->client_rcv_end=true;

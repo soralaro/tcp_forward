@@ -44,12 +44,12 @@ int main() {
         }
 #if 1
         struct timeval timeout = {1, 0};//3s
-        int ret = setsockopt(conn, SOL_SOCKET, SO_SNDTIMEO,  &timeout, sizeof(timeout));
+        int ret = setsockopt(conn, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
         if (ret < 0) {
             perror("setsockopt SO_SNDTIMEO");
             exit(1);
         }
-        ret = setsockopt(conn, SOL_SOCKET, SO_RCVTIMEO,  &timeout, sizeof(timeout));
+        ret = setsockopt(conn, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
         if (ret < 0) {
             perror("setsockopt SO_RCVTIMEO");
             exit(1);
@@ -59,23 +59,22 @@ int main() {
 
         struct timeval tv;
 
-        memset(&tv,0,sizeof(tv));
+        memset(&tv, 0, sizeof(tv));
 
-        getsockopt(conn, SOL_SOCKET,SO_RCVTIMEO, &tv, &optlen);
+        getsockopt(conn, SOL_SOCKET, SO_RCVTIMEO, &tv, &optlen);
 #endif
-
-        forward *forward = forward::forward_pool_get();
-        if(forward!=NULL) {
-            static unsigned  int id=0;
-            forward->init(id++,conn,&Server);
-            printf("new connect id=%d \n",forward->id);
+        static unsigned  int id=0;
+        if (Server.add_forward(id,conn))
+        {
+            id++;
         } else
         {
             close(conn);
         }
+
     }
     close(ss);
-    ThreadPool.pool_destroy();
+    ThreadPool::pool_destroy();
     forward::forward_pool_destroy();
 
     return 0;

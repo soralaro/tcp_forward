@@ -7,7 +7,8 @@
 #include "../include/forward.h"
 
 
-
+unsigned char server::encryp_key=0xab;
+std::vector<server *> server::server_Pool;
 void server::setKey(unsigned  char input_key)
 {
     encryp_key=input_key;
@@ -82,7 +83,14 @@ void server::release()
     }
     id=0;
     commandProcess->relase();
+    while (!q_client_msg.empty()) {
+        MSG Msg;
+        q_client_msg.pop(Msg);
+        char *buf = (char *) Msg.msg;
+        delete[] buf;
+    }
     DGDBG("id=%d release end !\n",id);
+
     free=true;
 }
 
@@ -103,7 +111,7 @@ void server::server_rcv(void *arg) {
             if (len > 0) {
                 // DGDBG("server recv len%d\n", len);
                 data_cover((unsigned char *) buffer, len);
-                this_class->commandProcess.process((unsigned char *)buffer, len);
+                this_class->commandProcess->process((unsigned char *)buffer, len);
             } else {
                 struct tcp_info info;
 
@@ -130,25 +138,22 @@ void  server::forward(void *arg) {
     std::unique_lock<std::mutex> mlock(this_class->mutex_client_socket);
     while (!this_class->destroy) {
         this_class->cond_client_socket.wait(mlock);
-        this_class->server_forward_end = false;
+        this_class->forward_end = false;
         signal(SIGPIPE, SIG_IGN);
         DGDBG("id =%d server_forward start \n", this_class->id);
         while (!this_class->end_) {
             MSG Msg;
             this_class->q_client_msg.pop(Msg);
-            if (Msg.type == MSG_TPY::msg_socket_end) {
-                break;
-            }
-            if(Msg.type==msg_socket_end)
+            if(Msg.type==MSG_TPY::msg_socket_end)
             {
-                this_class->commandProcess->erease_mforwar(((forward *)Msg.from)->id);
+                this_class->commandProcess->erease_mforward(Msg.from);
             }
             char *buf = (char *) Msg.msg;
             int ret = this_class->send_all(buf, Msg.size);
             delete[] buf;
             if (ret < 0) {
                 //DGDBG("id =%d send <0,server_forward\n",this_class->id);
-                close(this_class->server_socket);
+                close(this_class->client_socket);
                 break;
             } else {
                 // DGDBG("server_forwar =%d\n",Msg.size);
@@ -174,7 +179,7 @@ int server::send_all( char *buf,int size)
     int remain=size;
     int sendedSize=0;
     while(remain>0) {
-        ret = send(server_socket, buf + sendedSize, remain, 0);
+        ret = send(client_socket, buf + sendedSize, remain, 0);
         if(ret>0)
         {
             sendedSize+=ret;

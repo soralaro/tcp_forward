@@ -173,7 +173,7 @@ int forward::send_all(MSG Msg)
         q_send_msg.push(Msg);
         return 0;
     }
-    int remain=size;
+    int remain=Msg.size;
     int sendedSize=0;
     while(remain>0) {
         ret = send(server_socket, buf + sendedSize, remain, 0);

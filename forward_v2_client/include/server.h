@@ -25,7 +25,6 @@
 #include "thread_pool.h"
 #include "block_queue.h"
 #include "command.h"
-#include "ringbuf.h"
 #include "../include/command_process.h"
 
 class server
@@ -33,9 +32,10 @@ class server
 public:
     server();
     void init(std::string ip ,int port);
-    ~server(){};
+    ~server();
     void release();
     static void setKey(unsigned  char input_key);
+    bool add_forward(unsigned int g_id,int socket_int);
     int id;
     BlockQueue<MSG> q_client_msg;
 private:
@@ -51,19 +51,12 @@ private:
     bool connect_state;
     bool end_;
     static  unsigned  char encryp_key;
-    command_process commandProcess;
+    command_process *commandProcess;
 private:
     std::mutex mutex_connect;
     std::condition_variable cond_connect;
 };
-server::server()
-{
-    end_=false;
-    id=0;
-    connect_state=false;
-    server_socket=0;
-    memset(&servaddr,0,sizeof(servaddr));
-}
+
 
 
 #endif //PROJECT_SERVER_H

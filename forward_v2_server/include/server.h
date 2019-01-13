@@ -24,7 +24,6 @@
 #include "thread_pool.h"
 #include "block_queue.h"
 #include "command.h"
-#include "ringbuf.h"
 #include "../include/command_process.h"
 
 class server

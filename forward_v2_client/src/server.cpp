@@ -6,7 +6,7 @@
 #include "../include/server.h"
 
 
-
+unsigned char server::encryp_key=0xab;
 void server::setKey(unsigned  char input_key)
 {
     encryp_key=input_key;
@@ -21,6 +21,18 @@ void server::data_cover(unsigned char *buf, int len)
     }
 }
 
+server::server()
+{
+    end_=false;
+    id=0;
+    connect_state=false;
+    server_socket=0;
+    memset(&servaddr,0,sizeof(servaddr));
+    commandProcess=new command_process(&q_client_msg);
+}
+server::~server() {
+    delete commandProcess;
+}
 void server::init(std::string ip ,int port) {
 
     servaddr.sin_family = AF_INET;
@@ -31,9 +43,34 @@ void server::init(std::string ip ,int port) {
     ThreadPool::pool_add_worker(server_forward, this);
 
 }
+bool server::add_forward(unsigned int g_id, int socket_int) {
+    if(!connect_state)
+    {
+        return false;
+    }
+    forward *forward = forward::forward_pool_get();
+    if(forward!=NULL) {
+        static unsigned  int id=0;
+        forward->init(g_id,socket_int,&q_client_msg);
+        commandProcess->add_mforward(forward);
+        printf("new connect id=%d \n",forward->id);
+    } else
+    {
+        return false;
+    }
+    return  true;
+}
 void server::release()
 {
     close(server_socket);
+
+    commandProcess->relase();
+    while (!q_client_msg.empty()) {
+        MSG Msg;
+        q_client_msg.pop(Msg);
+        char *buf = (char *) Msg.msg;
+        delete[] buf;
+    }
     DGDBG("id=%d release end !\n",id);
 }
 
@@ -58,7 +95,6 @@ void  server::server_forward(void *arg) {
         delete[] buf;
         if (ret < 0) {
             DGDBG("id =%d send <0,server_forward\n",this_class->id);
-            close(this_class->server_socket);
             this_class->connect_state=false;
         } else {
             DGDBG("server_forwar =%d\n",Msg.size);
@@ -88,7 +124,7 @@ void server::server_rcv(void *arg) {
         if (len > 0) {
             // DGDBG("server recv len%d\n", len);
             data_cover((unsigned char *)buffer, len);
-            this_class->commandProcess.process(buffer,len);
+            this_class->commandProcess->process((unsigned char*)buffer,len);
         }
         else
         {
@@ -100,8 +136,8 @@ void server::server_rcv(void *arg) {
             if(info.tcpi_state!=TCP_ESTABLISHED)
             {
                // DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
-                close(this_class->server_socket);
-                this_class->connect_state=false;
+               this_class->release();
+               this_class->connect_state=false;
             }
             usleep(1000);
         }

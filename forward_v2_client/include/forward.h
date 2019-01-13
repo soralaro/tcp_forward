@@ -25,14 +25,13 @@
 #include "thread_pool.h"
 #include "block_queue.h"
 #include "command.h"
-#include "server.h"
 
 
 class forward
 {
 public:
     forward();
-    void init(unsigned int g_id,int socket_int,server *pServer);
+    void init(unsigned int g_id,int socket_int,BlockQueue<MSG> *q_msg);
     ~forward();
     void release();
     int send_all(char *buf,int size);
@@ -40,15 +39,15 @@ public:
     static forward * forward_pool_get();
     static void forward_pool_destroy();
     static void setKey(unsigned  char input_key);
+    void setEnd(){end_=true;};
     bool free;
     bool destroy;
     unsigned int id;
-    server *mServer;
 private:
     static std::vector<forward *> forward_Pool;
     static void data_cover(unsigned char *buf, int len);
     static void client_rcv(void *arg);
-
+    BlockQueue<MSG> *q_client_msg;
     int client_socket;
     std::mutex mutex_client_socket;
     std::condition_variable cond_client_socket;
