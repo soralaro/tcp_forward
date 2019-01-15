@@ -97,13 +97,14 @@ void forward::client_rcv(void *arg) {
             char *buffer = new char[BUFFER_SIZE];
             int len = recv(this_class->client_socket, buffer+sizeof(COMMANT), BUFFER_SIZE-sizeof(COMMANT), 0);
             if (len > 0) {
-                // DGDBG("client recv len%d\n", len);
+                DGDBG("client recv len%d\n", len);
                 data_cover((unsigned char *) buffer, len);
 
                 MSG Msg;
                 Msg.type = MSG_TPY::msg_client_rcv;
                 Msg.from=this_class;
                 Msg.msg = buffer;
+                Msg.size=sizeof(COMMANT)+len;
                 COMMANT *commant=(COMMANT *) buffer;
                 commant->size=sizeof(COMMANT)+len;
                 commant->com=(unsigned int)socket_command::Data;
@@ -121,7 +122,7 @@ void forward::client_rcv(void *arg) {
                 getsockopt(this_class->client_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
                 if(info.tcpi_state!=TCP_ESTABLISHED)
                 {
-                   // DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
+                    DGDBG("id =%d client tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
                     break;
                 }
                 usleep(1000);

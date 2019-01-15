@@ -88,7 +88,7 @@ void  server::server_forward(void *arg) {
         MSG Msg;
         this_class->q_client_msg.pop(Msg);
         if( Msg.type==MSG_TPY::msg_socket_end) {
-            break;
+            this_class->commandProcess->erease_mforward(Msg.from);
         }
         char *buf=(char *)Msg.msg;
         int ret = send_all(this_class->server_socket, buf, Msg.size);
@@ -135,7 +135,7 @@ void server::server_rcv(void *arg) {
             getsockopt(this_class->server_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
             if(info.tcpi_state!=TCP_ESTABLISHED)
             {
-               // DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
+               DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
                this_class->release();
                this_class->connect_state=false;
             }
@@ -172,6 +172,7 @@ bool server::server_connect()
     if (connect(server_socket, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
         // perror("server connect");
         close(server_socket);
+        DGDBG("server connect fail ,id=%d",id);
         return false;
     }
     else {

@@ -5,8 +5,8 @@
 #include "../include/server.h"
 #define ListenQueue 200
 
-#define LOCAL_PORT 7001
-#define SERVER_PORT 7002
+#define LOCAL_PORT 7101
+#define SERVER_PORT 6018
 #define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 200
 #define MAX_DEVICE  10
@@ -71,10 +71,11 @@ int main() {
         server *Server = server::server_pool_get();
         if(Server!=NULL) {
             static unsigned  int id=0;
-            Server->init(id++,conn,SERVER_IP,SERVER_PORT);
+            Server->init(id++,conn);
             printf("new connect id=%d \n",Server->id);
         } else
         {
+            printf("server_pool_get fail\n");
             close(conn);
         }
     }

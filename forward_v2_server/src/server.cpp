@@ -34,6 +34,7 @@ server * server::server_pool_get()
     for(unsigned int i=0;i<server_Pool.size();i++) {
         if(server_Pool[i]->free)
         {
+            server_Pool[i]->free= false;
             return server_Pool[i];
         }
     }
@@ -48,7 +49,8 @@ void server::server_pool_destroy()
 }
 server::server()
 {
-    end_=false;
+    end_=true;
+    free=true;
     id=0;
     destroy=false;
     client_socket=0;
@@ -61,13 +63,11 @@ server::~server()
 {
     delete commandProcess;
 }
-void server::init(unsigned int g_id,int socket_int,std::string ip ,int port) {
+void server::init(unsigned int g_id,int socket_int) {
 
     client_socket=socket_int;
     id=g_id;
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(port);  ///服务器端口
-    servaddr.sin_addr.s_addr = inet_addr(ip.c_str());  ///服务器ip
+    end_=false;
     std::unique_lock<std::mutex> mlock(mutex_client_socket);
     mlock.unlock();
     cond_client_socket.notify_all();
@@ -81,7 +81,7 @@ void server::release()
         std::unique_lock<std::mutex> mlock(mutex_forward_end);
         cond_forward_end.wait(mlock);
     }
-    id=0;
+
     commandProcess->relase();
     while (!q_client_msg.empty()) {
         MSG Msg;
@@ -90,7 +90,7 @@ void server::release()
         delete[] buf;
     }
     DGDBG("id=%d release end !\n",id);
-
+    id=0;
     free=true;
 }
 
@@ -109,7 +109,7 @@ void server::server_rcv(void *arg) {
 
             int len = recv(this_class->client_socket, buffer, BUFFER_SIZE, 0);
             if (len > 0) {
-                // DGDBG("server recv len%d\n", len);
+                 DGDBG("server recv len%d\n", len);
                 data_cover((unsigned char *) buffer, len);
                 this_class->commandProcess->process((unsigned char *)buffer, len);
             } else {
@@ -119,7 +119,7 @@ void server::server_rcv(void *arg) {
 
                 getsockopt(this_class->client_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *) &info_len);
                 if (info.tcpi_state != TCP_ESTABLISHED) {
-                    // DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
+                    DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
                     this_class->end_=true;
                     break;
                 }
@@ -152,11 +152,11 @@ void  server::forward(void *arg) {
             int ret = this_class->send_all(buf, Msg.size);
             delete[] buf;
             if (ret < 0) {
-                //DGDBG("id =%d send <0,server_forward\n",this_class->id);
+                DGDBG("id =%d send <0,server_forward\n",this_class->id);
                 close(this_class->client_socket);
                 break;
             } else {
-                // DGDBG("server_forwar =%d\n",Msg.size);
+                 DGDBG("server_forwar =%d\n",Msg.size);
             }
 
         }

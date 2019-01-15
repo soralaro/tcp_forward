@@ -30,7 +30,7 @@ class server
 {
 public:
     server();
-    void init(unsigned int g_id,int socket_int,std::string ip ,int port);
+    void init(unsigned int g_id,int socket_int);
     ~server();
     void release();
     static void setKey(unsigned  char input_key);
@@ -48,7 +48,6 @@ private:
     bool server_connect();
     int send_all(char *buf,int size);
     int client_socket;
-    struct sockaddr_in servaddr;
 private:
     static std::vector<server *> server_Pool;
     bool rcv_end;

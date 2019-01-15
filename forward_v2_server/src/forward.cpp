@@ -116,6 +116,7 @@ void forward::server_rcv(void *arg) {
                 Msg.type = MSG_TPY::msg_client_rcv;
                 Msg.from=this_class;
                 Msg.msg = buffer;
+                Msg.size=sizeof(COMMANT)+len;
                 COMMANT *commant=(COMMANT *) buffer;
                 commant->size=sizeof(COMMANT)+len;
                 commant->com=(unsigned int)socket_command::Data;
