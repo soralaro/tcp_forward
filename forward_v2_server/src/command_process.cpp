@@ -18,8 +18,8 @@ command_process::command_process(BlockQueue<MSG> *q_msg)
 {
     state =com_wait_star;
     commant_cur=0;
-    current_max_socket_id=0;
     q_client_msg=q_msg;
+    current_max_socket_id=0;
 }
 
 command_process::~command_process()
@@ -59,6 +59,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     memcpy(&command, buf, sizeof(command));
                     buf += sizeof(command);
                     pro_len -= sizeof(command);
+                    DGDBG(" command_process state = com_head_rcv_end");
                     state = com_head_rcv_end;
                     commant_cur = sizeof(command);
                 } else {
@@ -66,6 +67,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     buf += pro_len;
                     commant_cur = pro_len;
                     pro_len = 0;
+                    DGDBG(" command_process state = com_head_rcv");
                     state = com_head_rcv;
                 }
                 break;
@@ -76,6 +78,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     memcpy((unsigned char *) (&command) + commant_cur, buf, head_remain);
                     buf += head_remain;
                     pro_len -= head_remain;
+                    DGDBG(" command_process state = com_head_rcv_end");
                     state = com_head_rcv_end;
                     commant_cur = sizeof(command);
                 } else {
@@ -83,6 +86,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     buf += pro_len;
                     commant_cur += pro_len;
                     pro_len = 0;
+                    DGDBG(" command_process state = com_head_rcv");
                     state = com_head_rcv;
                 }
                 break;
@@ -91,17 +95,20 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                 Msg.type = MSG_TPY::msg_server_rcv;
                 Msg.msg = buf;
                 unsigned int commant_remain = command.size - sizeof(command);
+                DGDBG(" command_process state =com_head_rcv_end id=%d,command.size=%dpro_len=%d ",command.socket_id,command.size,pro_len);
                 if (pro_len >= commant_remain) {
                     Msg.size = commant_remain;
                     buf += commant_remain;
                     pro_len -= commant_remain;
                     commant_cur = 0;
+                    DGDBG(" command_process state = com_wait_star id=%d command.size=%d",command.socket_id,command.size);
                     state = com_wait_star;
                 } else {
                     Msg.size = pro_len;
                     buf += pro_len;
                     pro_len = 0;
                     commant_cur += pro_len;
+                    DGDBG(" command_process state = com_data_rcv");
                     state = com_data_rcv;
                 }
                 break;
@@ -115,12 +122,14 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     buf += commant_remain;
                     pro_len -= commant_remain;
                     commant_cur = 0;
+                    DGDBG(" command_process state = com_wait_star");
                     state = com_wait_star;
                 } else {
                     Msg.size = pro_len;
                     buf += pro_len;
                     pro_len = 0;
                     commant_cur += pro_len;
+                    DGDBG(" command_process state = com_data_rcv");
                     state = com_data_rcv;
                 }
                 break;
@@ -129,7 +138,6 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                 break;
         }
         rcv_comm_process(command,Msg);
-
     }
 }
 
@@ -141,6 +149,7 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
 
         case (unsigned int )socket_command::Data:
         {
+            DGDBG("rcv_comm_process Data size=%d",Msg.size);
             if(Msg.size>0)
             {
                 if(iter==mforward.end())
@@ -168,6 +177,7 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
         {
             if(iter==mforward.end())
             {
+                DGDBG("rcv_comm_process socket_command::connect socket_id:%d",com.socket_id);
                 if(com.socket_id<=current_max_socket_id)
                 {
                     break;
@@ -186,6 +196,7 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
         {
             if(iter!=mforward.end())
             {
+                DGDBG("rcv_comm_process socket_command::dst_connetc socket_id:%d",com.socket_id);
                 auto forword = iter->second;
                 forword->setEnd();
                 mforward.erase(iter);

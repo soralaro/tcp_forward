@@ -7,7 +7,7 @@
 #include "../include/forward.h"
 
 
-unsigned char server::encryp_key=0xab;
+unsigned char server::encryp_key=0xAB;
 std::vector<server *> server::server_Pool;
 void server::setKey(unsigned  char input_key)
 {
@@ -57,6 +57,7 @@ server::server()
     forward_end=true;
     rcv_end=true;
     ThreadPool::pool_add_worker(server_rcv, this);
+    ThreadPool::pool_add_worker(forward, this);
     commandProcess=new command_process(&q_client_msg);
 }
 server::~server()
@@ -99,13 +100,14 @@ void server::release()
 void server::server_rcv(void *arg) {
 
     server *this_class = (server *)arg;
-    DGDBG("id=%d server_rcv star! \n",this_class->id);
+
     std::unique_lock<std::mutex> mlock(this_class->mutex_client_socket);
     while (!this_class->destroy) {
         this_class->cond_client_socket.wait(mlock);
         this_class->rcv_end=false;
+        DGDBG("id=%d server_rcv star! \n",this_class->id);
         while (!this_class->end_) {
-            char *buffer=new char[BUFFER_SIZE];
+            char buffer[BUFFER_SIZE];
 
             int len = recv(this_class->client_socket, buffer, BUFFER_SIZE, 0);
             if (len > 0) {
@@ -134,13 +136,13 @@ void server::server_rcv(void *arg) {
 
 void  server::forward(void *arg) {
     server *this_class = (server *)arg;
-    DGDBG("id=%d server_forward star! \n",this_class->id);
+
     std::unique_lock<std::mutex> mlock(this_class->mutex_client_socket);
     while (!this_class->destroy) {
         this_class->cond_client_socket.wait(mlock);
         this_class->forward_end = false;
         signal(SIGPIPE, SIG_IGN);
-        DGDBG("id =%d server_forward start \n", this_class->id);
+        DGDBG("id=%d server_forward star! \n",this_class->id);
         while (!this_class->end_) {
             MSG Msg;
             this_class->q_client_msg.pop(Msg);
@@ -156,7 +158,7 @@ void  server::forward(void *arg) {
                 close(this_class->client_socket);
                 break;
             } else {
-                 DGDBG("server_forwar =%d\n",Msg.size);
+                 DGDBG("server_forwar send size =%d\n",Msg.size);
             }
 
         }

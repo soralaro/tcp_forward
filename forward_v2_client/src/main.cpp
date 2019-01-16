@@ -9,7 +9,7 @@
 #define SERVER_PORT 7101
 #define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 30
-#define ENCRYP_KEY  0XA5
+#define ENCRYP_KEY  0XAB
 
 int main() {
     signal(SIGPIPE, SIG_IGN);
@@ -63,7 +63,7 @@ int main() {
 
         getsockopt(conn, SOL_SOCKET, SO_RCVTIMEO, &tv, &optlen);
 #endif
-        static unsigned  int id=0;
+        static unsigned  int id=1;
         if (Server.add_forward(id,conn))
         {
             id++;

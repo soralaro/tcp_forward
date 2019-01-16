@@ -10,7 +10,7 @@
 #define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 200
 #define MAX_DEVICE  10
-#define ENCRYP_KEY  0XA5
+#define ENCRYP_KEY  0XAB
 
 int main() {
     signal(SIGPIPE, SIG_IGN);

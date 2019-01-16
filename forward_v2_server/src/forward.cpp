@@ -4,6 +4,7 @@
 
 #include"omp.h"
 #include "../include/forward.h"
+#include <stdio.h>
 
 std::vector<forward *> forward::forward_Pool;
 unsigned  char forward::encryp_key=0xA5;
@@ -94,10 +95,11 @@ forward::~forward() {
 void forward::server_rcv(void *arg) {
     forward *this_class = (forward *)arg;
     this_class->server_socket=false;
-    DGDBG("id=%d client_rcv star\n",this_class->id);
+
     std::unique_lock<std::mutex> mlock(this_class->mutex_server_socket);
     while (!this_class->destroy) {
         this_class->cond_server_socket.wait(mlock);
+        DGDBG("id=%d client_rcv star\n",this_class->id);
         if (!this_class->connect_state) {
             if (!this_class->server_connect()) {
                 this_class->end_=true;
@@ -109,18 +111,19 @@ void forward::server_rcv(void *arg) {
             char *buffer = new char[BUFFER_SIZE];
             int len = recv(this_class->server_socket, buffer+sizeof(COMMANT), BUFFER_SIZE-sizeof(COMMANT), 0);
             if (len > 0) {
-                // DGDBG("client recv len%d\n", len);
-                data_cover((unsigned char *) buffer, len);
+                 DGDBG("client recv len%d\n", len);
 
                 MSG Msg;
                 Msg.type = MSG_TPY::msg_client_rcv;
                 Msg.from=this_class;
                 Msg.msg = buffer;
                 Msg.size=sizeof(COMMANT)+len;
-                COMMANT *commant=(COMMANT *) buffer;
-                commant->size=sizeof(COMMANT)+len;
-                commant->com=(unsigned int)socket_command::Data;
-                commant->socket_id=this_class->id;
+                COMMANT commant;
+                commant.size=sizeof(COMMANT)+len;
+                commant.com=(unsigned int)socket_command::Data;
+                commant.socket_id=this_class->id;
+                memcpy(buffer,&commant,sizeof(commant));
+                data_cover((unsigned char *) buffer, Msg.size);
                 this_class->q_client_msg->push(Msg);
             }
             else {
@@ -147,10 +150,12 @@ void forward::server_rcv(void *arg) {
         char *buffer = new char[BUFFER_SIZE];
         Msg.from=this_class;
         Msg.msg = buffer;
-        COMMANT *commant=(COMMANT *) buffer;
-        commant->size=sizeof(COMMANT);
-        commant->com=(unsigned int)socket_command::dst_connetc;
-        commant->socket_id=this_class->id;
+        COMMANT commant;
+        commant.size=sizeof(COMMANT);
+        commant.com=(unsigned int)socket_command::dst_connetc;
+        commant.socket_id=this_class->id;
+        memcpy(buffer,&commant,sizeof(commant));
+        data_cover((unsigned char *) buffer, Msg.size);
         this_class->q_client_msg->push(Msg);
 
         DGDBG("id=%d client_rcv exit!\n",this_class->id);
@@ -166,11 +171,13 @@ int forward::send_all(MSG Msg)
     int ret;
     char *buf=(char *)(Msg.msg);
     if(end_) {
-        delete [] buf;
         return -1;
     }
     if(connect_state== false)
     {
+        char *buffer=new char[Msg.size];
+        memcpy(buffer,Msg.msg,Msg.size);
+        Msg.msg=buffer;
         q_send_msg.push(Msg);
         return 0;
     }
@@ -186,11 +193,10 @@ int forward::send_all(MSG Msg)
         {
             //close(client_socket);
             end_=true;
-            delete [] buf;
             return -1;
         }
     }
-    delete [] buf;
+    DGDBG("id=%d,forward send size=%d",id,Msg.size);
     return 1;
 }
 
@@ -198,7 +204,7 @@ bool forward::server_connect()
 {
     DGDBG("id=%d server_connect star! \n",id);
     if (connect(server_socket, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
-        // perror("server connect");
+        perror("server connect");
         close(server_socket);
         return false;
     }
@@ -235,6 +241,8 @@ bool forward::server_connect()
         {
             MSG Msg=q_send_msg.pop();
             send_all(Msg);
+            char *buf=(char *)Msg.msg;
+            delete [] buf;
         }
 
     }

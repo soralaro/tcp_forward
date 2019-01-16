@@ -6,7 +6,7 @@
 #include "../include/forward.h"
 
 std::vector<forward *> forward::forward_Pool;
-unsigned  char forward::encryp_key=0xA5;
+unsigned  char forward::encryp_key=0xAB;
 void forward::forward_pool_int(int max_num)
 {
     forward_Pool.resize(max_num);
@@ -98,17 +98,19 @@ void forward::client_rcv(void *arg) {
             int len = recv(this_class->client_socket, buffer+sizeof(COMMANT), BUFFER_SIZE-sizeof(COMMANT), 0);
             if (len > 0) {
                 DGDBG("client recv len%d\n", len);
-                data_cover((unsigned char *) buffer, len);
+
 
                 MSG Msg;
                 Msg.type = MSG_TPY::msg_client_rcv;
                 Msg.from=this_class;
                 Msg.msg = buffer;
                 Msg.size=sizeof(COMMANT)+len;
-                COMMANT *commant=(COMMANT *) buffer;
-                commant->size=sizeof(COMMANT)+len;
-                commant->com=(unsigned int)socket_command::Data;
-                commant->socket_id=this_class->id;
+                COMMANT commant;
+                commant.size=sizeof(COMMANT)+len;
+                commant.com=(unsigned int)socket_command::Data;
+                commant.socket_id=this_class->id;
+                memcpy(buffer,&commant,sizeof(commant));
+                data_cover((unsigned char *) buffer, Msg.size);
                 this_class->q_client_msg->push(Msg);
             }
             else {
@@ -135,10 +137,11 @@ void forward::client_rcv(void *arg) {
         char *buffer = new char[BUFFER_SIZE];
         Msg.from=this_class;
         Msg.msg = buffer;
-        COMMANT *commant=(COMMANT *) buffer;
-        commant->size=sizeof(COMMANT);
-        commant->com=(unsigned int)socket_command::dst_connetc;
-        commant->socket_id=this_class->id;
+        COMMANT commant;
+        commant.size=sizeof(COMMANT);
+        commant.com=(unsigned int)socket_command::dst_connetc;
+        commant.socket_id=this_class->id;
+        memcpy(buffer,&commant,sizeof(commant));
         this_class->q_client_msg->push(Msg);
 
         DGDBG("id=%d client_rcv exit!\n",this_class->id);

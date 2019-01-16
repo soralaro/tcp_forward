@@ -122,7 +122,7 @@ void server::server_rcv(void *arg) {
 
         int len = recv(this_class->server_socket, buffer,BUFFER_SIZE, 0);
         if (len > 0) {
-            // DGDBG("server recv len%d\n", len);
+             DGDBG("server recv len%d\n", len);
             data_cover((unsigned char *)buffer, len);
             this_class->commandProcess->process((unsigned char*)buffer,len);
         }

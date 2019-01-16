@@ -46,7 +46,7 @@ private:
     void rcv_comm_process(COMMANT com,MSG Msg);
     COMMANT command;
     int commant_cur;
-    unsigned  int current_max_socket_id;
+    unsigned int current_max_socket_id;
     COMMANT_STATE  state;
     std::map <unsigned int,forward *> mforward;
 };
