@@ -115,7 +115,7 @@ void forward::client_rcv(void *arg) {
             }
             else {
                 delete[] buffer;
-                DGDBG("id =%d client recv erro \n", this_class->id);
+               // DGDBG("id =%d client recv erro \n", this_class->id);
 
                 struct tcp_info info;
 

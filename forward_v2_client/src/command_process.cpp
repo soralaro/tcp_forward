@@ -164,6 +164,7 @@ void command_process::rcv_comm_process(MSG Msg)
 
                 } else {
                     auto forword = iter->second;
+                    DGDBG("forword->send_all size=%d \n",Msg.size);
                     forword->send_all((char *)Msg.msg,Msg.size);
                 }
             }

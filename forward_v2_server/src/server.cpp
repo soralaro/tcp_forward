@@ -72,6 +72,9 @@ void server::init(unsigned int g_id,int socket_int) {
     std::unique_lock<std::mutex> mlock(mutex_client_socket);
     mlock.unlock();
     cond_client_socket.notify_all();
+    std::unique_lock<std::mutex> mlock2(mutex_forward_start);
+    mlock2.unlock();
+    cond_forward_start.notify_all();
 
 }
 void server::release()
@@ -137,9 +140,9 @@ void server::server_rcv(void *arg) {
 void  server::forward(void *arg) {
     server *this_class = (server *)arg;
 
-    std::unique_lock<std::mutex> mlock(this_class->mutex_client_socket);
+    std::unique_lock<std::mutex> mlock(this_class->mutex_forward_start);
     while (!this_class->destroy) {
-        this_class->cond_client_socket.wait(mlock);
+        this_class->cond_forward_start.wait(mlock);
         this_class->forward_end = false;
         signal(SIGPIPE, SIG_IGN);
         DGDBG("id=%d server_forward star! \n",this_class->id);
@@ -154,7 +157,7 @@ void  server::forward(void *arg) {
             int ret = this_class->send_all(buf, Msg.size);
             delete[] buf;
             if (ret < 0) {
-                DGDBG("id =%d send <0,server_forward\n",this_class->id);
+               // DGDBG("id =%d send <0,server_forward\n",this_class->id);
                 close(this_class->client_socket);
                 break;
             } else {

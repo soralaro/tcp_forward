@@ -11,10 +11,10 @@ void get_thread_stacksize_for_attr(pthread_attr_t * p_pattr)
     status = pthread_attr_getstacksize(p_pattr, &size);
     if(0 != status)
     {
-        DGDBG("pthread_attr_getstacksize err [%d]\n",status);
+      //  DGDBG("pthread_attr_getstacksize err [%d]\n",status);
         return;
     }
-    DGDBG("current thread stack size:%lu\n", size);
+    //DGDBG("current thread stack size:%lu\n", size);
     return ;
 }
 void get_thread_stacksize()
@@ -26,10 +26,10 @@ void get_thread_stacksize()
     status = pthread_attr_getstacksize(&pattr, &size);
     if(0 != status)
     {
-        DGDBG("pthread_attr_getstacksize err [%d]\n",status);
+     //   DGDBG("pthread_attr_getstacksize err [%d]\n",status);
         return ;
     }
-    DGDBG("current thread stack size:%lu\n", size);
+    //DGDBG("current thread stack size:%lu\n", size);
     return ;
 }
 void set_thread_stacksize(pthread_attr_t * p_pthread_attr_t,size_t size)
@@ -40,10 +40,10 @@ void set_thread_stacksize(pthread_attr_t * p_pthread_attr_t,size_t size)
     status = pthread_attr_setstacksize(p_pthread_attr_t, size);
     if(0 != status)
     {
-        DGDBG("pthread_attr_getstacksize err [%d]\n",status);
+     //   DGDBG("pthread_attr_getstacksize err [%d]\n",status);
         return ;
     }
-    DGDBG("set thread stack size:%lu\n", size);
+    //DGDBG("set thread stack size:%lu\n", size);
     return ;
 }
 #
@@ -153,7 +153,7 @@ int ThreadPool::pool_destroy ()
 
 void * ThreadPool::thread_routine (void *arg)
 {
-    DGDBG ("starting thread 0x%lu\n", pthread_self ());
+   // DGDBG ("starting thread 0x%lu\n", pthread_self ());
     while (1)
     {
         pthread_mutex_lock (&(pool->queue_lock));

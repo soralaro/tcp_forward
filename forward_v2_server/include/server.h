@@ -59,6 +59,9 @@ private:
     std::mutex mutex_client_socket;
     std::condition_variable cond_client_socket;
 
+    std::mutex mutex_forward_start;
+    std::condition_variable cond_forward_start;
+
     std::mutex mutex_forward_end;
     std::condition_variable cond_forward_end;
 };
