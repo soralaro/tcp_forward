@@ -52,7 +52,7 @@ forward::forward(struct sockaddr_in addr) {
     destroy=false;
     id=0;
     servaddr=addr;
-
+    connect_state=false;
     ThreadPool::pool_add_worker(server_rcv, this);
 }
 void forward::init(unsigned int g_id,BlockQueue<MSG> *q_msg) {
@@ -70,7 +70,7 @@ void forward::release()
 {
     DGDBG("id=%d forward release start !\n",id);
     end_=true;
-    while (server_rcv_end)
+    while (!server_rcv_end)
     {
         usleep(1000);
     }
@@ -81,6 +81,7 @@ void forward::release()
         delete [] buf;
     }
     close(server_socket);
+    connect_state=false;
     server_socket=-1;
     DGDBG("id=%d forward release end !\n",id);
     id=0;
@@ -94,12 +95,14 @@ forward::~forward() {
 
 void forward::server_rcv(void *arg) {
     forward *this_class = (forward *)arg;
-    this_class->server_socket=false;
+
 
     std::unique_lock<std::mutex> mlock(this_class->mutex_server_socket);
     while (!this_class->destroy) {
         this_class->cond_server_socket.wait(mlock);
+        this_class->server_rcv_end=false;
         DGDBG("id=%d client_rcv star\n",this_class->id);
+
         if (!this_class->connect_state) {
             if (!this_class->server_connect()) {
                 this_class->end_=true;
@@ -115,7 +118,7 @@ void forward::server_rcv(void *arg) {
 
                 MSG Msg;
                 Msg.type = MSG_TPY::msg_client_rcv;
-                Msg.from=this_class;
+                Msg.socket_id=this_class->id;
                 Msg.msg = buffer;
                 Msg.size=sizeof(COMMANT)+len;
                 COMMANT commant;
@@ -137,7 +140,7 @@ void forward::server_rcv(void *arg) {
                 getsockopt(this_class->server_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
                 if(info.tcpi_state!=TCP_ESTABLISHED)
                 {
-                   // DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
+                    DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
                     break;
                 }
                 usleep(1000);
@@ -148,8 +151,9 @@ void forward::server_rcv(void *arg) {
 
         Msg.type = MSG_TPY::msg_socket_end;
         char *buffer = new char[BUFFER_SIZE];
-        Msg.from=this_class;
+        Msg.socket_id=this_class->id;
         Msg.msg = buffer;
+        Msg.size=sizeof(COMMANT);
         COMMANT commant;
         commant.size=sizeof(COMMANT);
         commant.com=(unsigned int)socket_command::dst_connetc;

@@ -151,7 +151,7 @@ void  server::forward(void *arg) {
             this_class->q_client_msg.pop(Msg);
             if(Msg.type==MSG_TPY::msg_socket_end)
             {
-                this_class->commandProcess->erease_mforward(Msg.from);
+                this_class->commandProcess->erease_mforward(Msg.socket_id);
             }
             char *buf = (char *) Msg.msg;
             int ret = this_class->send_all(buf, Msg.size);

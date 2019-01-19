@@ -70,7 +70,7 @@ void forward::release()
 {
     DGDBG("id=%d forward release start !\n",id);
     end_=true;
-    while (client_rcv_end)
+    while (!client_rcv_end)
     {
         usleep(1000);
     }
@@ -88,11 +88,12 @@ forward::~forward() {
 
 void forward::client_rcv(void *arg) {
     forward *this_class = (forward *)arg;
-    this_class->client_rcv_end=false;
+
     DGDBG("id=%d client_rcv star\n",this_class->id);
     std::unique_lock<std::mutex> mlock(this_class->mutex_client_socket);
     while (!this_class->destroy) {
         this_class->cond_client_socket.wait(mlock);
+        this_class->client_rcv_end=false;
         while (!this_class->end_) {
             char *buffer = new char[BUFFER_SIZE];
             int len = recv(this_class->client_socket, buffer+sizeof(COMMANT), BUFFER_SIZE-sizeof(COMMANT), 0);
@@ -102,7 +103,7 @@ void forward::client_rcv(void *arg) {
 
                 MSG Msg;
                 Msg.type = MSG_TPY::msg_client_rcv;
-                Msg.from=this_class;
+                Msg.socket_id=this_class->id;
                 Msg.msg = buffer;
                 Msg.size=sizeof(COMMANT)+len;
                 COMMANT commant;
@@ -135,13 +136,15 @@ void forward::client_rcv(void *arg) {
 
         Msg.type = MSG_TPY::msg_socket_end;
         char *buffer = new char[BUFFER_SIZE];
-        Msg.from=this_class;
+        Msg.socket_id=this_class->id;
         Msg.msg = buffer;
+        Msg.size=sizeof(COMMANT);
         COMMANT commant;
         commant.size=sizeof(COMMANT);
         commant.com=(unsigned int)socket_command::dst_connetc;
         commant.socket_id=this_class->id;
         memcpy(buffer,&commant,sizeof(commant));
+        data_cover((unsigned char *) buffer, Msg.size);
         this_class->q_client_msg->push(Msg);
 
         DGDBG("id=%d client_rcv exit!\n",this_class->id);

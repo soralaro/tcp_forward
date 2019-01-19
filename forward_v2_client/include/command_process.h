@@ -39,7 +39,7 @@ public:
     command_process(BlockQueue<MSG> *q_msg);
     ~command_process();
    void  process(unsigned char *data_in, unsigned int len);
-   void  erease_mforward(void *from);
+   void  erease_mforward(unsigned int sockeid);
    void  add_mforward(forward * Forward);
    void relase();
 

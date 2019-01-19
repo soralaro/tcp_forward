@@ -40,7 +40,7 @@ public:
     ~command_process();
     void process(unsigned char *data_in, unsigned int len);
     void relase();
-    void erease_mforward(void *from);
+    void erease_mforward(unsigned int socket_id);
     BlockQueue<MSG> *q_client_msg;
 private:
     void rcv_comm_process(COMMANT com,MSG Msg);

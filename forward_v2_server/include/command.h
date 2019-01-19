@@ -28,7 +28,7 @@ enum class MSG_TPY
 typedef struct MSG_struct
 {
     MSG_TPY type;
-    void *from;
+    unsigned int socket_id;
     void * msg;
     int  size;
 }MSG;

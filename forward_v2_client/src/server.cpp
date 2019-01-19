@@ -56,6 +56,7 @@ bool server::add_forward(unsigned int g_id, int socket_int) {
         printf("new connect id=%d \n",forward->id);
     } else
     {
+        printf("forward_pool_get false! \n");
         return false;
     }
     return  true;
@@ -88,7 +89,7 @@ void  server::server_forward(void *arg) {
         MSG Msg;
         this_class->q_client_msg.pop(Msg);
         if( Msg.type==MSG_TPY::msg_socket_end) {
-            this_class->commandProcess->erease_mforward(Msg.from);
+            this_class->commandProcess->erease_mforward(Msg.socket_id);
         }
         char *buf=(char *)Msg.msg;
         int ret = send_all(this_class->server_socket, buf, Msg.size);
@@ -119,7 +120,7 @@ void server::server_rcv(void *arg) {
             }
         }
         static char buffer[BUFFER_SIZE];
-
+        DGDBG("id=%d server waiting rcv! \n",this_class->id);
         int len = recv(this_class->server_socket, buffer,BUFFER_SIZE, 0);
         if (len > 0) {
              DGDBG("server recv len%d\n", len);
@@ -177,7 +178,7 @@ bool server::server_connect()
     }
     else {
 #if 1
-        struct timeval timeout = {1, 0};//3s
+        struct timeval timeout = {1000, 0};//3s
         int ret = setsockopt(server_socket, SOL_SOCKET, SO_SNDTIMEO,  &timeout, sizeof(timeout));
         if (ret < 0) {
             perror("setsockopt SO_SNDTIMEO");

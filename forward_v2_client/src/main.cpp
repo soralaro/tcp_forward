@@ -8,7 +8,7 @@
 #define LOCAL_PORT 7102
 #define SERVER_PORT 7101
 #define SERVER_IP "127.0.0.1"
-#define MAX_CONNECT 30
+#define MAX_CONNECT 200
 #define ENCRYP_KEY  0XAB
 
 int main() {
@@ -23,7 +23,7 @@ int main() {
     struct sockaddr_in local_sockaddr;
     local_sockaddr.sin_family = AF_INET;
     local_sockaddr.sin_port = htons(LOCAL_PORT);
-    local_sockaddr.sin_addr.s_addr =inet_addr("172.17.0.111");  //htonl(INADDR_ANY);// inet_addr("192.168.123.227");  ///服务器ip //htonl(INADDR_ANY);
+    local_sockaddr.sin_addr.s_addr =htonl(INADDR_ANY);// inet_addr("192.168.123.227");  ///服务器ip //htonl(INADDR_ANY);
     if(bind(ss, (struct sockaddr* ) &local_sockaddr, sizeof(local_sockaddr))==-1) {
         perror("bind");
         exit(1);

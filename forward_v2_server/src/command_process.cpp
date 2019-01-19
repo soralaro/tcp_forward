@@ -3,11 +3,11 @@
 //
 #include "command_process.h"
 
-void command_process::erease_mforward(void *from) {
-    unsigned int socket_id=((forward *)from)->id;
+void command_process::erease_mforward(unsigned int socket_id) {
     auto iter=mforward.find(socket_id);
     if(iter!=mforward.end())
     {
+        DGDBG("erease_mforward socket_id=%d",socket_id);
         auto forword = iter->second;
         forword->setEnd();
         mforward.erase(iter);
@@ -60,8 +60,14 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     buf += sizeof(command);
                     pro_len -= sizeof(command);
                     DGDBG(" command_process state = com_head_rcv_end");
-                    state = com_head_rcv_end;
-                    commant_cur = sizeof(command);
+                    if(command.size>sizeof(command)) {
+                        state = com_head_rcv_end;
+                        commant_cur = sizeof(command);
+                    } else
+                    {
+                        state = com_wait_star;
+                        commant_cur=0;
+                    }
                 } else {
                     memcpy((unsigned char *) (&command), buf, pro_len);
                     buf += pro_len;
@@ -79,8 +85,14 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     buf += head_remain;
                     pro_len -= head_remain;
                     DGDBG(" command_process state = com_head_rcv_end");
-                    state = com_head_rcv_end;
-                    commant_cur = sizeof(command);
+                    if(command.size>sizeof(command)) {
+                        state = com_head_rcv_end;
+                        commant_cur = sizeof(command);
+                    } else
+                    {
+                        state = com_wait_star;
+                        commant_cur=0;
+                    }
                 } else {
                     memcpy((unsigned char *) (&command) + commant_cur, buf, pro_len);
                     buf += pro_len;
@@ -106,8 +118,8 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                 } else {
                     Msg.size = pro_len;
                     buf += pro_len;
-                    pro_len = 0;
                     commant_cur += pro_len;
+                    pro_len = 0;
                     DGDBG(" command_process state = com_data_rcv");
                     state = com_data_rcv;
                 }
@@ -116,7 +128,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
             case com_data_rcv: {
                 Msg.type = MSG_TPY::msg_server_rcv;
                 Msg.msg = buf;
-                unsigned int commant_remain = command.size - sizeof(command) - commant_cur;
+                unsigned int commant_remain = command.size - commant_cur;
                 if (pro_len >= commant_remain) {
                     Msg.size = commant_remain;
                     buf += commant_remain;
@@ -144,6 +156,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
 void command_process::rcv_comm_process(COMMANT com,MSG Msg)
 {
     auto iter=mforward.find(command.socket_id);
+    DGDBG("rcv_comm_process com=%d,socket_id=%d",com.com,command.socket_id);
     switch(com.com)
     {
 
@@ -200,8 +213,16 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
                 auto forword = iter->second;
                 forword->setEnd();
                 mforward.erase(iter);
+            } else
+            {
+                DGDBG("rcv_comm_process socket_command::dst_connetc socket_id:%d,not exit",com.socket_id);
             }
             break;
         }
+        default:
+            {
+                DGDBG("socket_command: %d",com.com);
+                break;
+            }
     }
 }
