@@ -156,7 +156,10 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
 void command_process::rcv_comm_process(COMMANT com,MSG Msg)
 {
     auto iter=mforward.find(command.socket_id);
-    DGDBG("rcv_comm_process com=%d,socket_id=%d",com.com,command.socket_id);
+    DGDBG("rcv_comm_process_HEAD size=%x,sn=%x,id=%x,com=%x ",command.size,command.sn,command.socket_id,command.com);
+    if(com.size>1024) {
+        exit(0);
+    }
     switch(com.com)
     {
 

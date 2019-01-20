@@ -173,15 +173,19 @@ void command_process::rcv_comm_process(MSG Msg)
             {
                 if(iter==mforward.end())
                 {
-                    Msg.type = MSG_TPY::msg_socket_end;
+                    MSG Msg_sv;
+                    Msg_sv.type = MSG_TPY::msg_socket_end;
                     char *buffer = new char[BUFFER_SIZE];
-                    Msg.socket_id=command.socket_id;
-                    Msg.msg = buffer;
-                    COMMANT *commant=(COMMANT *) buffer;
-                    commant->size=sizeof(COMMANT);
-                    commant->com=(unsigned int)socket_command::dst_connetc;
-                    commant->socket_id=command.socket_id;
-                    q_client_msg->push(Msg);
+                    Msg_sv.socket_id=command.socket_id;
+                    Msg_sv.msg = buffer;
+                    Msg_sv.size=sizeof(COMMANT);
+
+                    COMMANT commant;
+                    commant.size=sizeof(COMMANT);
+                    commant.com=(unsigned int)socket_command::dst_connetc;
+                    commant.socket_id=command.socket_id;
+                    memcpy(buffer,&commant,sizeof(commant));
+                    q_client_msg->push(Msg_sv);
 
                 } else {
                     auto forword = iter->second;

@@ -15,6 +15,7 @@ enum class socket_command
 typedef struct COM_struct
 {
     unsigned int size;
+    unsigned int sn;
     unsigned int  com;
     unsigned int socket_id;
 }COMMANT;

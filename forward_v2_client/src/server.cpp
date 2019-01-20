@@ -87,16 +87,27 @@ void  server::server_forward(void *arg) {
             this_class->cond_connect.wait(mlock);
         }
         MSG Msg;
+        Msg.size=0;
         this_class->q_client_msg.pop(Msg);
         if( Msg.type==MSG_TPY::msg_socket_end) {
             this_class->commandProcess->erease_mforward(Msg.socket_id);
         }
         char *buf=(char *)Msg.msg;
+        if(Msg.size>0) {
+            COMMANT commant;
+            memcpy(&commant, buf, sizeof(commant));
+            static unsigned int sn=0;
+            commant.sn=sn++;
+            DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ",commant.size,commant.sn,commant.socket_id,commant.com);
+            memcpy(buf,&commant,sizeof(commant));
+            data_cover((unsigned char *)buf,Msg.size);
+        }
         int ret = send_all(this_class->server_socket, buf, Msg.size);
         delete[] buf;
         if (ret < 0) {
             DGDBG("id =%d send <0,server_forward\n",this_class->id);
             this_class->connect_state=false;
+            close(this_class->server_socket);
         } else {
             DGDBG("server_forwar =%d\n",Msg.size);
         }

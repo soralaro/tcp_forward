@@ -111,7 +111,6 @@ void forward::client_rcv(void *arg) {
                 commant.com=(unsigned int)socket_command::Data;
                 commant.socket_id=this_class->id;
                 memcpy(buffer,&commant,sizeof(commant));
-                data_cover((unsigned char *) buffer, Msg.size);
                 this_class->q_client_msg->push(Msg);
             }
             else {
@@ -144,7 +143,6 @@ void forward::client_rcv(void *arg) {
         commant.com=(unsigned int)socket_command::dst_connetc;
         commant.socket_id=this_class->id;
         memcpy(buffer,&commant,sizeof(commant));
-        data_cover((unsigned char *) buffer, Msg.size);
         this_class->q_client_msg->push(Msg);
 
         DGDBG("id=%d client_rcv exit!\n",this_class->id);
