@@ -5,6 +5,7 @@
 #include"omp.h"
 #include "../include/server.h"
 #include "../include/forward.h"
+#include <algorithm>
 
 
 unsigned char server::encryp_key=0xAB;
@@ -21,6 +22,18 @@ void server::data_cover(unsigned char *buf, int len)
     {
         buf[i]=(buf[i]^encryp_key);
     }
+}
+void server::data_encrypt(unsigned char *buf, int len)
+{
+    if(encry_data==NULL)
+    {
+        return;
+    }
+    for(int i=0;i<len;i++)
+    {
+        buf[i]=(buf[i]^encry_data[i]);
+    }
+
 }
 void server::server_pool_int(int max_num)
 {
@@ -59,14 +72,48 @@ server::server()
     ThreadPool::pool_add_worker(server_rcv, this);
     ThreadPool::pool_add_worker(forward, this);
     commandProcess=new command_process(&q_client_msg);
+    encry_data=NULL;
 }
 server::~server()
 {
     delete commandProcess;
+    if(encry_data!=NULL)
+    {
+        delete [] encry_data;
+        encry_data=NULL;
+    }
 }
 void server::init(unsigned int g_id,int socket_int) {
 
+    encry_data=new unsigned char [BUFFER_SIZE];
+    srand((int)time(0));
+    for(int i=0;i<BUFFER_SIZE;)
+    {
+        encry_data[i]=rand();
+        if(encry_data[i]!=0)
+        {
+            printf("%x ",encry_data[i]);
+            i++;
+        }
+    }
+    printf("\n");
+    commandProcess->encry_data=encry_data;
+    MSG Msg;
+    Msg.type = MSG_TPY::msg_encrypt;
+    Msg.socket_id=g_id;
+    char *buffer = new char[BUFFER_SIZE+sizeof(COMMANT)];
+    Msg.msg = buffer;
+    Msg.size=BUFFER_SIZE+sizeof(COMMANT);
+    COMMANT commant;
+    commant.size=BUFFER_SIZE+sizeof(COMMANT);
+    commant.com=(unsigned int)socket_command::encrypt;
+    commant.socket_id=1;
+    memcpy(buffer,&commant,sizeof(commant));
+    memcpy(buffer+sizeof(COMMANT),encry_data,BUFFER_SIZE);
+    q_client_msg.push(Msg);
+
     client_socket=socket_int;
+    commandProcess->client_socket=socket_int;
     id=g_id;
     end_=false;
     std::unique_lock<std::mutex> mlock(mutex_client_socket);
@@ -93,6 +140,11 @@ void server::release()
         char *buf = (char *) Msg.msg;
         delete[] buf;
     }
+    if(encry_data!=NULL)
+    {
+        delete [] encry_data;
+        encry_data=NULL;
+    }
     DGDBG("id=%d release end !\n",id);
     id=0;
     free=true;
@@ -115,7 +167,6 @@ void server::server_rcv(void *arg) {
             int len = recv(this_class->client_socket, buffer, BUFFER_SIZE, 0);
             if (len > 0) {
                  DGDBG("server recv len%d\n", len);
-                data_cover((unsigned char *) buffer, len);
                 this_class->commandProcess->process((unsigned char *)buffer, len);
             } else {
                 struct tcp_info info;
@@ -154,6 +205,18 @@ void  server::forward(void *arg) {
                 this_class->commandProcess->erease_mforward(Msg.socket_id);
             }
             char *buf = (char *) Msg.msg;
+            if(Msg.size>0) {
+                COMMANT commant;
+                memcpy(&commant, buf, sizeof(commant));
+                static unsigned int sn=0;
+                commant.sn=sn++;
+                DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ",commant.size,commant.sn,commant.socket_id,commant.com);
+                memcpy(buf,&commant,sizeof(commant));
+                if(Msg.type==MSG_TPY::msg_encrypt)
+                    data_cover((unsigned char *)buf,Msg.size);
+                else
+                    this_class->data_encrypt((unsigned char *)buf,Msg.size);
+            }
             int ret = this_class->send_all(buf, Msg.size);
             delete[] buf;
             if (ret < 0) {

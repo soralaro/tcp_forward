@@ -36,14 +36,7 @@ void forward::forward_pool_destroy()
         delete forward_Pool[i];
     }
 }
-void forward::data_cover(unsigned char *buf, int len)
-{
-    //#pragma omp parallel for num_threads(4)
-    for(int i=0;i<len;i++)
-    {
-        buf[i]=(buf[i]^encryp_key);
-    }
-}
+
 forward::forward() {
 
     end_=true;

@@ -45,7 +45,6 @@ public:
     unsigned int id;
 private:
     static std::vector<forward *> forward_Pool;
-    static void data_cover(unsigned char *buf, int len);
     static void server_rcv(void *arg);
     bool server_connect();
 

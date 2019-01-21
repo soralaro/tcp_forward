@@ -21,20 +21,37 @@ void server::data_cover(unsigned char *buf, int len)
     }
 }
 
+void server::data_encrypt(unsigned char *buf, int len)
+{
+    if(encry_data==NULL)
+    {
+        return;
+    }
+    for(int i=0;i<len;i++)
+    {
+        buf[i]=(buf[i]^encry_data[i]);
+    }
+}
+
 server::server()
 {
     end_=false;
+    get_encrypt_state=false;
     id=0;
     connect_state=false;
     server_socket=0;
     memset(&servaddr,0,sizeof(servaddr));
     commandProcess=new command_process(&q_client_msg);
+    commandProcess->encry_data=encry_data;
+    commandProcess->get_encrypt_state=&get_encrypt_state;
 }
 server::~server() {
     delete commandProcess;
+
 }
 void server::init(std::string ip ,int port) {
 
+    get_encrypt_state=false;
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(port);  ///服务器端口
     servaddr.sin_addr.s_addr = inet_addr(ip.c_str());  ///服务器ip
@@ -48,12 +65,16 @@ bool server::add_forward(unsigned int g_id, int socket_int) {
     {
         return false;
     }
+    if(!get_encrypt_state)
+    {
+        return false;
+    }
     forward *forward = forward::forward_pool_get();
     if(forward!=NULL) {
         static unsigned  int id=0;
         forward->init(g_id,socket_int,&q_client_msg);
         commandProcess->add_mforward(forward);
-        printf("new connect id=%d \n",forward->id);
+        //printf("new connect id=%d \n",forward->id);
     } else
     {
         printf("forward_pool_get false! \n");
@@ -64,7 +85,7 @@ bool server::add_forward(unsigned int g_id, int socket_int) {
 void server::release()
 {
     close(server_socket);
-
+    get_encrypt_state=false;
     commandProcess->relase();
     while (!q_client_msg.empty()) {
         MSG Msg;
@@ -72,6 +93,7 @@ void server::release()
         char *buf = (char *) Msg.msg;
         delete[] buf;
     }
+    send_sn=0;
     DGDBG("id=%d release end !\n",id);
 }
 
@@ -96,11 +118,10 @@ void  server::server_forward(void *arg) {
         if(Msg.size>0) {
             COMMANT commant;
             memcpy(&commant, buf, sizeof(commant));
-            static unsigned int sn=0;
-            commant.sn=sn++;
+            commant.sn=this_class->send_sn++;
             DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ",commant.size,commant.sn,commant.socket_id,commant.com);
             memcpy(buf,&commant,sizeof(commant));
-            data_cover((unsigned char *)buf,Msg.size);
+            this_class->data_encrypt((unsigned char *)buf,Msg.size);
         }
         int ret = send_all(this_class->server_socket, buf, Msg.size);
         delete[] buf;
@@ -135,7 +156,8 @@ void server::server_rcv(void *arg) {
         int len = recv(this_class->server_socket, buffer,BUFFER_SIZE, 0);
         if (len > 0) {
              DGDBG("server recv len%d\n", len);
-            data_cover((unsigned char *)buffer, len);
+             if(!this_class->get_encrypt_state)
+                data_cover((unsigned char *)buffer, len);
             this_class->commandProcess->process((unsigned char*)buffer,len);
         }
         else
@@ -213,6 +235,7 @@ bool server::server_connect()
 #endif
         DGDBG("id =%d ,server connect suc \n",id);
         connect_state=true;
+        send_sn=0;
         std::unique_lock<std::mutex> mlock(mutex_connect);
         mlock.unlock();
         cond_connect.notify_all();

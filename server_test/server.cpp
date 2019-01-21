@@ -76,31 +76,31 @@ int main() {
             exit(1);
         }
         printf("connect suc\n");
-        char buffer[100];
+        unsigned char buffer[2000];
         //主线程
         while (1) {
 
             memset(buffer, 0, sizeof(buffer));
-            int len = recv(conn, buffer, sizeof(buffer), 0);
-            if(len>0) {
-                printf("recv len%d\n", len);
-                for(int i=0;i<len;i++)
-                {
-                    printf("%d, ",buffer[i]);
+            int a=0;
+            while(a<2000) {
+                int len = recv(conn, buffer+a, sizeof(buffer)-a, 0);
+
+                if (len > 0) {
+                    printf("recv len%d\n", len);
+                    for (int i = 0; i < len; i++) {
+                        printf("%d, ", buffer[i+a]);
+                    }
+                    a+=len;
+                    printf("\n");
+                } else if (len == 0) {
+                    printf("recv time out\n");
+                    break;
+                } else {
+                    printf("recv erro \n");
+                    break;
                 }
-                printf("\n");
             }
-            else if(len==0)
-            {
-                printf("recv time out\n");
-                break;
-            }
-            else
-            {
-                printf("recv erro \n");
-                break;
-            }
-            for(int i=0;i<100;i++)
+            for(int i=0;i<2000;i++)
             {
                 buffer[i]=i+100;
             }
@@ -111,7 +111,7 @@ int main() {
                 break;
             }
             sleep(1);
-            close(conn);
+           // close(conn);
         }
         close(conn);
     }

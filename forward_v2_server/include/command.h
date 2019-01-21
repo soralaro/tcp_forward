@@ -11,6 +11,7 @@ enum class socket_command
               Data =0x1234,
               connect =0x1235,
               dst_connetc=0x1236,
+              encrypt=0x1237,
         };
 typedef struct COM_struct
 {
@@ -23,7 +24,8 @@ enum class MSG_TPY
 {
     msg_client_rcv=0,
     msg_server_rcv,
-    msg_socket_end
+    msg_socket_end,
+    msg_encrypt
 };
 
 typedef struct MSG_struct

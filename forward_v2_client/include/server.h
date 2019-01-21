@@ -40,6 +40,7 @@ public:
     BlockQueue<MSG> q_client_msg;
 private:
     static void data_cover(unsigned char *buf, int len);
+    void data_encrypt(unsigned char *buf, int len);
     static void server_rcv(void *arg);
     static void server_forward(void *arg);
     bool server_connect();
@@ -47,11 +48,13 @@ private:
     int server_socket;
     struct sockaddr_in servaddr;
 private:
-
     bool connect_state;
+    bool get_encrypt_state;
     bool end_;
     static  unsigned  char encryp_key;
+    unsigned char encry_data[BUFFER_SIZE];
     command_process *commandProcess;
+    unsigned int send_sn;
 private:
     std::mutex mutex_connect;
     std::condition_variable cond_connect;

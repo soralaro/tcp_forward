@@ -42,13 +42,18 @@ public:
     void relase();
     void erease_mforward(unsigned int socket_id);
     BlockQueue<MSG> *q_client_msg;
+    unsigned char *encry_data;
+    int *client_socket;
 private:
     void rcv_comm_process(COMMANT com,MSG Msg);
+    void data_encrypt(unsigned char *buf,unsigned int cur, int len);
+
     COMMANT command;
     int commant_cur;
     unsigned int current_max_socket_id;
     COMMANT_STATE  state;
     std::map <unsigned int,forward *> mforward;
+    unsigned int max_sn;
 };
 
 #endif //GFW_COMMAND_PROCESS_H

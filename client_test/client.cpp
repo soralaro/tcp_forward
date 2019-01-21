@@ -101,26 +101,31 @@ int main(int argc, char** argv)
         printf("connect sucess!\n");
 
         while (1) {
-            unsigned char buffer[100];
-            for(int i=0;i<100;i++)
+            unsigned char buffer[2000];
+            for(int i=0;i<2000;i++)
             {
                 buffer[i]=i;
             }
             int ret = send(sock_cli, buffer, sizeof(buffer), 0);
             printf("send comand ret=%d\n", ret);
-            int len = recv(sock_cli, buffer, sizeof(buffer), 0);
-            if (len > 0) {
-                printf("recv len %d %d\n", len,buffer[len-1]);
-                for(int i=0;i<len;i++)
-                {
-                    printf("%d, ",buffer[i]);
+            int a=0;
+            while(a<2000) {
+                int len = recv(sock_cli, buffer+a, sizeof(buffer)-a, 0);
+
+                if (len > 0) {
+                    printf("recv len%d\n", len);
+                    for (int i = 0; i < len; i++) {
+                        printf("%d, ", buffer[i+a]);
+                    }
+                    a+=len;
+                    printf("\n");
+                } else if (len == 0) {
+                    printf("recv time out\n");
+                    break;
+                } else {
+                    printf("recv erro \n");
+                    break;
                 }
-                printf("\n");
-            } else if (len == 0) {
-                printf("recv time out\n");
-            } else {
-                printf("recv erro \n");
-                break;
             }
             sleep(100);
 

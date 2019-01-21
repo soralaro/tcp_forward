@@ -43,6 +43,7 @@ public:
     BlockQueue<MSG> q_client_msg;
 private:
     static void data_cover(unsigned char *buf, int len);
+    void data_encrypt(unsigned char *buf, int len);
     static void server_rcv(void *arg);
     static void  forward(void *arg);
     bool server_connect();
@@ -54,6 +55,7 @@ private:
     bool forward_end;
     bool end_;
     static  unsigned  char encryp_key;
+    unsigned char *encry_data;
     command_process *commandProcess;
 private:
     std::mutex mutex_client_socket;

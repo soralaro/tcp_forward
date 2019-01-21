@@ -42,7 +42,9 @@ public:
    void  erease_mforward(unsigned int sockeid);
    void  add_mforward(forward * Forward);
    void relase();
-
+   bool *get_encrypt_state;
+   unsigned char *encry_data;
+   unsigned int encry_rcv_len;
 private:
     COMMANT command;
     int commant_cur;
@@ -51,6 +53,7 @@ private:
     unsigned  int current_max_socket_id;
     BlockQueue<MSG> *q_client_msg;
     void rcv_comm_process(MSG Msg);
+    void data_encrypt(unsigned char *buf, unsigned int cur,int len);
 };
 
 #endif //GFW_COMMAND_PROCESS_H

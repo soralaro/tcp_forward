@@ -37,14 +37,7 @@ void forward::forward_pool_destroy()
         delete forward_Pool[i];
     }
 }
-void forward::data_cover(unsigned char *buf, int len)
-{
-    //#pragma omp parallel for num_threads(4)
-    for(int i=0;i<len;i++)
-    {
-        buf[i]=(buf[i]^encryp_key);
-    }
-}
+
 forward::forward(struct sockaddr_in addr) {
 
     end_=true;
@@ -126,7 +119,6 @@ void forward::server_rcv(void *arg) {
                 commant.com=(unsigned int)socket_command::Data;
                 commant.socket_id=this_class->id;
                 memcpy(buffer,&commant,sizeof(commant));
-                data_cover((unsigned char *) buffer, Msg.size);
                 this_class->q_client_msg->push(Msg);
             }
             else {
@@ -159,7 +151,6 @@ void forward::server_rcv(void *arg) {
         commant.com=(unsigned int)socket_command::dst_connetc;
         commant.socket_id=this_class->id;
         memcpy(buffer,&commant,sizeof(commant));
-        data_cover((unsigned char *) buffer, Msg.size);
         this_class->q_client_msg->push(Msg);
 
         DGDBG("id=%d client_rcv exit!\n",this_class->id);

@@ -11,6 +11,7 @@ enum class socket_command
               Data =0x1234,
               connect =0x1235,
               dst_connetc=0x1236,
+              encrypt=0x1237,
         };
 typedef struct COM_struct
 {

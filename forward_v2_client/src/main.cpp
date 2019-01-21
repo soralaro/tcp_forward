@@ -7,7 +7,7 @@
 
 #define LOCAL_PORT 7102
 #define SERVER_PORT 7101
-#define SERVER_IP "127.0.0.1"
+#define SERVER_IP "45.62.126.40"
 #define MAX_CONNECT 200
 #define ENCRYP_KEY  0XAB
 
@@ -36,7 +36,7 @@ int main() {
     struct sockaddr_in client_addr;
     socklen_t length = sizeof(client_addr);
     while(1) {
-        printf("waiting for connet!\n");
+       // printf("waiting for connet!\n");
         conn = accept(ss, (struct sockaddr *) &client_addr, &length);
         if (conn < 0) {
             perror("connect");
@@ -63,7 +63,7 @@ int main() {
 
         getsockopt(conn, SOL_SOCKET, SO_RCVTIMEO, &tv, &optlen);
 #endif
-        static unsigned  int id=1;
+        static unsigned  int id=2;
         if (Server.add_forward(id,conn))
         {
             id++;

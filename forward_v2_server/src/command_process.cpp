@@ -3,6 +3,19 @@
 //
 #include "command_process.h"
 
+void command_process::data_encrypt(unsigned char *buf, unsigned int cur,int len)
+{
+    if(encry_data==NULL)
+    {
+        return;
+    }
+    unsigned char *enp=encry_data+cur;
+    for(int i=0;i<len;i++)
+    {
+        buf[i]=(buf[i]^enp[i]);
+    }
+
+}
 void command_process::erease_mforward(unsigned int socket_id) {
     auto iter=mforward.find(socket_id);
     if(iter!=mforward.end())
@@ -20,6 +33,9 @@ command_process::command_process(BlockQueue<MSG> *q_msg)
     commant_cur=0;
     q_client_msg=q_msg;
     current_max_socket_id=0;
+    encry_data=NULL;
+    client_socket=NULL;
+    max_sn=0;
 }
 
 command_process::~command_process()
@@ -44,12 +60,19 @@ void command_process::relase()
     state =com_wait_star;
     commant_cur=0;
     current_max_socket_id=0;
+    encry_data=NULL;
+    client_socket=NULL;
+    max_sn=0;
 }
 
 void command_process::process(unsigned char *data_in, unsigned int len) {
 
     unsigned char *buf=data_in;
     unsigned int   pro_len=len;
+    if(client_socket==NULL)
+    {
+        return;
+    }
     while (pro_len>0) {
         MSG Msg;
         Msg.size=0;
@@ -57,6 +80,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
             case com_wait_star: {
                 if (pro_len >= sizeof(command)) {
                     memcpy(&command, buf, sizeof(command));
+                    data_encrypt((unsigned char *)(&command),0,sizeof(command));
                     buf += sizeof(command);
                     pro_len -= sizeof(command);
                     DGDBG(" command_process state = com_head_rcv_end");
@@ -82,6 +106,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                 unsigned int head_remain = sizeof(command) - commant_cur;
                 if (pro_len >= head_remain) {
                     memcpy((unsigned char *) (&command) + commant_cur, buf, head_remain);
+                    data_encrypt((unsigned char *)(&command),0,sizeof(command));
                     buf += head_remain;
                     pro_len -= head_remain;
                     DGDBG(" command_process state = com_head_rcv_end");
@@ -110,13 +135,16 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                 DGDBG(" command_process state =com_head_rcv_end id=%d,command.size=%dpro_len=%d ",command.socket_id,command.size,pro_len);
                 if (pro_len >= commant_remain) {
                     Msg.size = commant_remain;
+                    data_encrypt(buf,commant_cur,commant_remain);
                     buf += commant_remain;
                     pro_len -= commant_remain;
+
                     commant_cur = 0;
                     DGDBG(" command_process state = com_wait_star id=%d command.size=%d",command.socket_id,command.size);
                     state = com_wait_star;
                 } else {
                     Msg.size = pro_len;
+                    data_encrypt(buf,commant_cur,pro_len);
                     buf += pro_len;
                     commant_cur += pro_len;
                     pro_len = 0;
@@ -131,6 +159,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                 unsigned int commant_remain = command.size - commant_cur;
                 if (pro_len >= commant_remain) {
                     Msg.size = commant_remain;
+                    data_encrypt(buf,commant_cur,commant_remain);
                     buf += commant_remain;
                     pro_len -= commant_remain;
                     commant_cur = 0;
@@ -138,6 +167,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     state = com_wait_star;
                 } else {
                     Msg.size = pro_len;
+                    data_encrypt(buf,commant_cur,pro_len);
                     buf += pro_len;
                     pro_len = 0;
                     commant_cur += pro_len;
@@ -149,7 +179,8 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
             cdefault:
                 break;
         }
-        rcv_comm_process(command,Msg);
+        if(state != com_head_rcv)
+            rcv_comm_process(command,Msg);
     }
 }
 
@@ -157,12 +188,26 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
 {
     auto iter=mforward.find(command.socket_id);
     DGDBG("rcv_comm_process_HEAD size=%x,sn=%x,id=%x,com=%x ",command.size,command.sn,command.socket_id,command.com);
+    if(command.sn>max_sn)
+    {
+        if(command.sn-max_sn>2)
+        {
+            close(*client_socket);
+            client_socket=NULL;
+            DGERR("rcv_comm_process_HEAD size=%x,sn=%x,id=%x,com=%x ",command.size,command.sn,command.socket_id,command.com);
+            return;
+        } else{
+            max_sn=command.sn;
+        }
+    }
     if(com.size>1024) {
-        exit(0);
+        close(*client_socket);
+        client_socket=NULL;
+        DGERR("rcv_comm_process_HEAD size=%x,sn=%x,id=%x,com=%x ",command.size,command.sn,command.socket_id,command.com);
+        return;
     }
     switch(com.com)
     {
-
         case (unsigned int )socket_command::Data:
         {
             DGDBG("rcv_comm_process Data size=%d",Msg.size);

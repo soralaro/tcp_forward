@@ -6,7 +6,7 @@
 #define ListenQueue 200
 
 #define LOCAL_PORT 7101
-#define SERVER_PORT 6018
+#define SERVER_PORT 6019
 #define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 200
 #define MAX_DEVICE  10
