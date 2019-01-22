@@ -28,6 +28,7 @@ void commandPro(unsigned char command)
         case STAR_SSR:
             system("/home/ubuntu/ssr_star_com.sh");
             system("/home/ubuntu/forward_dst &");
+            system("/home/ubuntu/forward_v2_server &");
             break;
         case STOP_SSR:
             system("/home/ubuntu/ssr_stop_com.sh");

@@ -25,6 +25,7 @@ void server::data_cover(unsigned char *buf, int len)
 }
 void server::data_encrypt(unsigned char *buf, int len)
 {
+
     if(encry_data==NULL)
     {
         return;
@@ -113,7 +114,7 @@ void server::init(unsigned int g_id,int socket_int) {
     q_client_msg.push(Msg);
 
     client_socket=socket_int;
-    commandProcess->client_socket=socket_int;
+    commandProcess->server_end=&end_;
     id=g_id;
     end_=false;
     std::unique_lock<std::mutex> mlock(mutex_client_socket);

@@ -23,6 +23,7 @@ void server::data_cover(unsigned char *buf, int len)
 
 void server::data_encrypt(unsigned char *buf, int len)
 {
+
     if(encry_data==NULL)
     {
         return;

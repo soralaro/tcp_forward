@@ -43,7 +43,7 @@ public:
     void erease_mforward(unsigned int socket_id);
     BlockQueue<MSG> *q_client_msg;
     unsigned char *encry_data;
-    int *client_socket;
+    bool *server_end;
 private:
     void rcv_comm_process(COMMANT com,MSG Msg);
     void data_encrypt(unsigned char *buf,unsigned int cur, int len);

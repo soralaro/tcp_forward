@@ -7,7 +7,7 @@
 
 #define LOCAL_PORT 7102
 #define SERVER_PORT 7101
-#define SERVER_IP "45.62.126.40"
+#define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 200
 #define ENCRYP_KEY  0XAB
 

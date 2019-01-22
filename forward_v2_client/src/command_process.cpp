@@ -24,6 +24,7 @@ command_process::~command_process()
 }
 void command_process::data_encrypt(unsigned char *buf, unsigned int cur,int len)
 {
+
     if(encry_data==NULL)
     {
         return;
@@ -35,7 +36,7 @@ void command_process::data_encrypt(unsigned char *buf, unsigned int cur,int len)
     unsigned char *enp=encry_data+cur;
     for(int i=0;i<len;i++)
     {
-        buf[i]=(buf[i]^enp[i]);
+       buf[i]=(buf[i]^enp[i]);
     }
 
 }
@@ -174,8 +175,8 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     Msg.size = pro_len;
                     data_encrypt(buf,commant_cur,pro_len);
                     buf += pro_len;
-                    pro_len = 0;
                     commant_cur += pro_len;
+                    pro_len = 0;
                     DGDBG(" command_process state = com_data_rcv ");
                     state = com_data_rcv;
                 }

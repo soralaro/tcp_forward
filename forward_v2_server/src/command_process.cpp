@@ -5,6 +5,7 @@
 
 void command_process::data_encrypt(unsigned char *buf, unsigned int cur,int len)
 {
+
     if(encry_data==NULL)
     {
         return;
@@ -34,7 +35,7 @@ command_process::command_process(BlockQueue<MSG> *q_msg)
     q_client_msg=q_msg;
     current_max_socket_id=0;
     encry_data=NULL;
-    client_socket=NULL;
+    server_end=NULL;
     max_sn=0;
 }
 
@@ -61,7 +62,7 @@ void command_process::relase()
     commant_cur=0;
     current_max_socket_id=0;
     encry_data=NULL;
-    client_socket=NULL;
+    server_end=NULL;
     max_sn=0;
 }
 
@@ -69,7 +70,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
 
     unsigned char *buf=data_in;
     unsigned int   pro_len=len;
-    if(client_socket==NULL)
+    if(server_end==NULL)
     {
         return;
     }
@@ -169,8 +170,8 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     Msg.size = pro_len;
                     data_encrypt(buf,commant_cur,pro_len);
                     buf += pro_len;
-                    pro_len = 0;
                     commant_cur += pro_len;
+                    pro_len = 0;
                     DGDBG(" command_process state = com_data_rcv");
                     state = com_data_rcv;
                 }
@@ -192,8 +193,8 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
     {
         if(command.sn-max_sn>2)
         {
-            close(*client_socket);
-            client_socket=NULL;
+            *server_end=true;
+            server_end=NULL;
             DGERR("rcv_comm_process_HEAD size=%x,sn=%x,id=%x,com=%x ",command.size,command.sn,command.socket_id,command.com);
             return;
         } else{
@@ -201,8 +202,8 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
         }
     }
     if(com.size>1024) {
-        close(*client_socket);
-        client_socket=NULL;
+        *server_end=true;
+        server_end=NULL;
         DGERR("rcv_comm_process_HEAD size=%x,sn=%x,id=%x,com=%x ",command.size,command.sn,command.socket_id,command.com);
         return;
     }
