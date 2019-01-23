@@ -25,7 +25,8 @@ enum class MSG_TPY
     msg_client_rcv=0,
     msg_server_rcv,
     msg_socket_end,
-    msg_encrypt
+    msg_encrypt,
+    msg_server_release
 };
 
 typedef struct MSG_struct

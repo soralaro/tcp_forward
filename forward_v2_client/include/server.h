@@ -51,6 +51,7 @@ private:
     bool connect_state;
     bool get_encrypt_state;
     bool end_;
+    bool forward_end;
     static  unsigned  char encryp_key;
     unsigned char encry_data[BUFFER_SIZE];
     command_process *commandProcess;

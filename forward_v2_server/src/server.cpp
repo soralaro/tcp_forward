@@ -127,9 +127,14 @@ void server::init(unsigned int g_id,int socket_int) {
 }
 void server::release()
 {
-    close(client_socket);
+
     if(!forward_end)
     {
+        MSG msg;
+        msg.type=MSG_TPY::msg_server_release;
+        msg.size=0;
+        msg.msg=NULL;
+        q_client_msg.push(msg);
         std::unique_lock<std::mutex> mlock(mutex_forward_end);
         cond_forward_end.wait(mlock);
     }
@@ -148,6 +153,7 @@ void server::release()
     }
     DGDBG("id=%d release end !\n",id);
     id=0;
+    close(client_socket);
     free=true;
 }
 
@@ -201,31 +207,37 @@ void  server::forward(void *arg) {
         while (!this_class->end_) {
             MSG Msg;
             this_class->q_client_msg.pop(Msg);
+            if(Msg.type==MSG_TPY::msg_server_release)
+            {
+                break;
+            }
             if(Msg.type==MSG_TPY::msg_socket_end)
             {
                 this_class->commandProcess->erease_mforward(Msg.socket_id);
             }
-            char *buf = (char *) Msg.msg;
+
             if(Msg.size>0) {
+                char *buf = (char *) Msg.msg;
                 COMMANT commant;
                 memcpy(&commant, buf, sizeof(commant));
-                static unsigned int sn=0;
-                commant.sn=sn++;
-                DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ",commant.size,commant.sn,commant.socket_id,commant.com);
-                memcpy(buf,&commant,sizeof(commant));
-                if(Msg.type==MSG_TPY::msg_encrypt)
-                    data_cover((unsigned char *)buf,Msg.size);
+                static unsigned int sn = 0;
+                commant.sn = sn++;
+                DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ", commant.size, commant.sn, commant.socket_id,
+                      commant.com);
+                memcpy(buf, &commant, sizeof(commant));
+                if (Msg.type == MSG_TPY::msg_encrypt)
+                    data_cover((unsigned char *) buf, Msg.size);
                 else
-                    this_class->data_encrypt((unsigned char *)buf,Msg.size);
-            }
-            int ret = this_class->send_all(buf, Msg.size);
-            delete[] buf;
-            if (ret < 0) {
-               // DGDBG("id =%d send <0,server_forward\n",this_class->id);
-                close(this_class->client_socket);
-                break;
-            } else {
-                 DGDBG("server_forwar send size =%d\n",Msg.size);
+                    this_class->data_encrypt((unsigned char *) buf, Msg.size);
+
+                int ret = this_class->send_all(buf, Msg.size);
+                delete[] buf;
+                if (ret < 0) {
+                    // DGDBG("id =%d send <0,server_forward\n",this_class->id);
+                    break;
+                } else {
+                    DGDBG("server_forwar send size =%d\n", Msg.size);
+                }
             }
 
         }

@@ -36,7 +36,8 @@ void server::data_encrypt(unsigned char *buf, int len)
 
 server::server()
 {
-    end_=false;
+    end_=true;
+    forward_end=true;
     get_encrypt_state=false;
     id=0;
     connect_state=false;
@@ -53,6 +54,9 @@ server::~server() {
 void server::init(std::string ip ,int port) {
 
     get_encrypt_state=false;
+    end_=false;
+    forward_end=true;
+    connect_state=false;
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(port);  ///服务器端口
     servaddr.sin_addr.s_addr = inet_addr(ip.c_str());  ///服务器ip
@@ -85,8 +89,20 @@ bool server::add_forward(unsigned int g_id, int socket_int) {
 }
 void server::release()
 {
-    close(server_socket);
+    if(!forward_end)
+    {
+        MSG msg;
+        msg.type=MSG_TPY::msg_server_release;
+        msg.size=0;
+        msg.msg=NULL;
+        q_client_msg.push(msg);
+        while (!forward_end)
+        {
+            sleep(1);
+        }
+    }
     get_encrypt_state=false;
+
     commandProcess->relase();
     while (!q_client_msg.empty()) {
         MSG Msg;
@@ -94,6 +110,8 @@ void server::release()
         char *buf = (char *) Msg.msg;
         delete[] buf;
     }
+    close(server_socket);
+    server_socket = socket(AF_INET,SOCK_STREAM, 0);
     send_sn=0;
     DGDBG("id=%d release end !\n",id);
 }
@@ -107,31 +125,39 @@ void  server::server_forward(void *arg) {
     while (!this_class->end_) {
         while(!this_class->connect_state)
         {
+            this_class->forward_end=true;
             this_class->cond_connect.wait(mlock);
         }
+        this_class->forward_end= false;
         MSG Msg;
         Msg.size=0;
         this_class->q_client_msg.pop(Msg);
+        if( Msg.type==MSG_TPY::msg_server_release)
+        {
+            continue;
+        }
         if( Msg.type==MSG_TPY::msg_socket_end) {
             this_class->commandProcess->erease_mforward(Msg.socket_id);
         }
-        char *buf=(char *)Msg.msg;
+
         if(Msg.size>0) {
+            char *buf=(char *)Msg.msg;
             COMMANT commant;
             memcpy(&commant, buf, sizeof(commant));
-            commant.sn=this_class->send_sn++;
-            DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ",commant.size,commant.sn,commant.socket_id,commant.com);
-            memcpy(buf,&commant,sizeof(commant));
-            this_class->data_encrypt((unsigned char *)buf,Msg.size);
-        }
-        int ret = send_all(this_class->server_socket, buf, Msg.size);
-        delete[] buf;
-        if (ret < 0) {
-            DGDBG("id =%d send <0,server_forward\n",this_class->id);
-            this_class->connect_state=false;
-            close(this_class->server_socket);
-        } else {
-            DGDBG("server_forwar =%d\n",Msg.size);
+            commant.sn = this_class->send_sn++;
+            DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ", commant.size, commant.sn, commant.socket_id,
+                  commant.com);
+            memcpy(buf, &commant, sizeof(commant));
+            this_class->data_encrypt((unsigned char *) buf, Msg.size);
+
+            int ret = send_all(this_class->server_socket, buf, Msg.size);
+            delete[] buf;
+            if (ret < 0) {
+                DGDBG("id =%d send <0,server_forward\n", this_class->id);
+                this_class->connect_state = false;
+            } else {
+                DGDBG("server_forwar =%d\n", Msg.size);
+            }
         }
 
     }
@@ -146,6 +172,7 @@ void server::server_rcv(void *arg) {
     {
         if(!this_class->connect_state)
         {
+            this_class->release();
             if(!this_class->server_connect())
             {
                 sleep(1);
@@ -171,7 +198,6 @@ void server::server_rcv(void *arg) {
             if(info.tcpi_state!=TCP_ESTABLISHED)
             {
                DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
-               this_class->release();
                this_class->connect_state=false;
             }
             usleep(1000);
@@ -212,7 +238,7 @@ bool server::server_connect()
     }
     else {
 #if 1
-        struct timeval timeout = {1000, 0};//3s
+        struct timeval timeout = {6, 0};//3s
         int ret = setsockopt(server_socket, SOL_SOCKET, SO_SNDTIMEO,  &timeout, sizeof(timeout));
         if (ret < 0) {
             perror("setsockopt SO_SNDTIMEO");

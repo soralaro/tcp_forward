@@ -47,7 +47,7 @@ int main() {
             continue;
         }
 #if 1
-        struct timeval timeout = {1, 0};//3s
+        struct timeval timeout = {6, 0};//3s
         int ret = setsockopt(conn, SOL_SOCKET, SO_SNDTIMEO,  &timeout, sizeof(timeout));
         if (ret < 0) {
             perror("setsockopt SO_SNDTIMEO");
