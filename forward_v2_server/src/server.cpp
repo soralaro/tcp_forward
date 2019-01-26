@@ -117,6 +117,7 @@ void server::init(unsigned int g_id,int socket_int) {
     commandProcess->server_end=&end_;
     id=g_id;
     end_=false;
+    send_sn=0;
     std::unique_lock<std::mutex> mlock(mutex_client_socket);
     mlock.unlock();
     cond_client_socket.notify_all();
@@ -220,8 +221,7 @@ void  server::forward(void *arg) {
                 char *buf = (char *) Msg.msg;
                 COMMANT commant;
                 memcpy(&commant, buf, sizeof(commant));
-                static unsigned int sn = 0;
-                commant.sn = sn++;
+                commant.sn = this_class->send_sn++;
                 DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ", commant.size, commant.sn, commant.socket_id,
                       commant.com);
                 memcpy(buf, &commant, sizeof(commant));

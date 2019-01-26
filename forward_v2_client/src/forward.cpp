@@ -92,7 +92,11 @@ void forward::client_rcv(void *arg) {
             int len = recv(this_class->client_socket, buffer+sizeof(COMMANT), BUFFER_SIZE-sizeof(COMMANT), 0);
             if (len > 0) {
                 DGDBG("client recv len%d\n", len);
-
+                if(this_class->end_)
+                {
+                    delete [] buffer;
+                    break;
+                }
 
                 MSG Msg;
                 Msg.type = MSG_TPY::msg_client_rcv;

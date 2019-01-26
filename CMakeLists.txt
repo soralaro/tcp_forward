@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.5)
 
 set(CMAKE_C_COMPILER gcc)
 set(CMAKE_CXX_COMPILER g++)
-#set( CMAKE_C_COMPILER          /home/czx/application/gcc-linaro-arm-linux-gnueabihf-4.9_0614/bin/arm-linux-gnueabihf-gcc )
-#set( CMAKE_CXX_COMPILER        /home/czx/application/gcc-linaro-arm-linux-gnueabihf-4.9_0614/bin/arm-linux-gnueabihf-g++ )
+#set( CMAKE_C_COMPILER         /czx/application/gcc-linaro-arm-linux-gnueabihf-4.9_0614/bin/arm-linux-gnueabihf-gcc )
+#set( CMAKE_CXX_COMPILER       /czx/application/gcc-linaro-arm-linux-gnueabihf-4.9_0614/bin/arm-linux-gnueabihf-g++ )
 
 #SET( CMAKE_CXX_FLAGS           "${ARM_C_CXX_FLAGS} "   CACHE STRING "c++ flags" )
 #SET( CMAKE_C_FLAGS             "${ARM_C_CXX_FLAGS} "   CACHE STRING "c flags" )

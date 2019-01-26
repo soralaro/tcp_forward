@@ -9,7 +9,7 @@
 #define SERVER_PORT 6019
 #define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 200
-#define MAX_DEVICE  10
+#define MAX_DEVICE 8
 #define ENCRYP_KEY  0XAB
 
 int main() {

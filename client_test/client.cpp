@@ -16,7 +16,7 @@
 #include <string>
 #include <algorithm>
 #include <iostream>
-#define MYPORT  7102
+#define MYPORT  7101
 #define BUFFER_SIZE 1024
 
 #define STOP_SSR  0x11

@@ -70,11 +70,12 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
 
     unsigned char *buf=data_in;
     unsigned int   pro_len=len;
-    if(server_end==NULL)
-    {
-        return;
-    }
+
     while (pro_len>0) {
+        if(server_end==NULL)
+        {
+            return;
+        }
         MSG Msg;
         Msg.size=0;
         switch (state) {

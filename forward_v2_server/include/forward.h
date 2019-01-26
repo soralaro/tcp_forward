@@ -39,7 +39,7 @@ public:
     static forward * forward_pool_get();
     static void forward_pool_destroy();
     static void setKey(unsigned  char input_key);
-    void setEnd(){end_=true;};
+    void setEnd(){end_=true;q_client_msg=NULL;};
     bool free;
     bool destroy;
     unsigned int id;

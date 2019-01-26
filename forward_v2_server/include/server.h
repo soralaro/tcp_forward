@@ -57,6 +57,7 @@ private:
     static  unsigned  char encryp_key;
     unsigned char *encry_data;
     command_process *commandProcess;
+    unsigned int send_sn;
 private:
     std::mutex mutex_client_socket;
     std::condition_variable cond_client_socket;

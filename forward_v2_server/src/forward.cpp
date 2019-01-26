@@ -108,7 +108,11 @@ void forward::server_rcv(void *arg) {
             int len = recv(this_class->server_socket, buffer+sizeof(COMMANT), BUFFER_SIZE-sizeof(COMMANT), 0);
             if (len > 0) {
                  DGDBG("client recv len%d\n", len);
-
+                if(this_class->q_client_msg==NULL)
+                {
+                    delete [] buffer;
+                    continue;
+                }
                 MSG Msg;
                 Msg.type = MSG_TPY::msg_client_rcv;
                 Msg.socket_id=this_class->id;
@@ -139,20 +143,20 @@ void forward::server_rcv(void *arg) {
             }
         }
         this_class->end_=true;
-        MSG Msg;
-
-        Msg.type = MSG_TPY::msg_socket_end;
-        char *buffer = new char[BUFFER_SIZE];
-        Msg.socket_id=this_class->id;
-        Msg.msg = buffer;
-        Msg.size=sizeof(COMMANT);
-        COMMANT commant;
-        commant.size=sizeof(COMMANT);
-        commant.com=(unsigned int)socket_command::dst_connetc;
-        commant.socket_id=this_class->id;
-        memcpy(buffer,&commant,sizeof(commant));
-        this_class->q_client_msg->push(Msg);
-
+        if(this_class->q_client_msg!=NULL) {
+            MSG Msg;
+            Msg.type = MSG_TPY::msg_socket_end;
+            char *buffer = new char[BUFFER_SIZE];
+            Msg.socket_id = this_class->id;
+            Msg.msg = buffer;
+            Msg.size = sizeof(COMMANT);
+            COMMANT commant;
+            commant.size = sizeof(COMMANT);
+            commant.com = (unsigned int) socket_command::dst_connetc;
+            commant.socket_id = this_class->id;
+            memcpy(buffer, &commant, sizeof(commant));
+            this_class->q_client_msg->push(Msg);
+        }
         DGDBG("id=%d client_rcv exit!\n",this_class->id);
         this_class->server_rcv_end=true;
         this_class->release();
