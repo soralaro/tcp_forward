@@ -72,6 +72,7 @@ server::server()
     rcv_end=true;
     ThreadPool::pool_add_worker(server_rcv, this);
     ThreadPool::pool_add_worker(forward, this);
+    ThreadPool::pool_add_worker(timer_fuc, this);
     commandProcess=new command_process(&q_client_msg);
     encry_data=NULL;
 }
@@ -98,7 +99,14 @@ void server::init(unsigned int g_id,int socket_int) {
         }
     }
     printf("\n");
+    while (!q_client_msg.empty()) {
+        MSG Msg;
+        q_client_msg.pop(Msg);
+        char *buf = (char *) Msg.msg;
+        delete[] buf;
+    }
     commandProcess->encry_data=encry_data;
+
     MSG Msg;
     Msg.type = MSG_TPY::msg_encrypt;
     Msg.socket_id=g_id;
@@ -118,6 +126,7 @@ void server::init(unsigned int g_id,int socket_int) {
     id=g_id;
     end_=false;
     send_sn=0;
+    heart_beat=0;
     std::unique_lock<std::mutex> mlock(mutex_client_socket);
     mlock.unlock();
     cond_client_socket.notify_all();
@@ -156,9 +165,38 @@ void server::release()
     id=0;
     close(client_socket);
     free=true;
+    heart_beat=0;
 }
 
+void server::timer_fuc(void *arg)
+{
 
+    server *this_class = (server *)arg;
+    while(!this_class->destroy) {
+        sleep(3);
+        if(!this_class->end_) {
+            this_class->heart_beat++;
+            if (this_class->heart_beat > 10) {
+                this_class->end_= true;
+                this_class->heart_beat=0;
+            } else
+            {
+                MSG Msg;
+                Msg.socket_id=2;
+                Msg.size=sizeof(COMMANT);
+                Msg.type=MSG_TPY::msg_heart_beat;
+                COMMANT commant;
+                commant.size=sizeof(COMMANT);
+                commant.socket_id=2;
+                commant.com=(unsigned int)socket_command::heart_beat;
+                unsigned  char *buf=new unsigned char [sizeof(COMMANT)];
+                memcpy(buf,&commant,sizeof(commant));
+                Msg.msg=buf;
+                this_class->q_client_msg.push(Msg);
+            }
+        }
+    }
+}
 
 void server::server_rcv(void *arg) {
 
@@ -176,6 +214,7 @@ void server::server_rcv(void *arg) {
             if (len > 0) {
                  DGDBG("server recv len%d\n", len);
                 this_class->commandProcess->process((unsigned char *)buffer, len);
+                this_class->heart_beat=0;
             } else {
                 struct tcp_info info;
 

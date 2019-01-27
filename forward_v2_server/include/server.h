@@ -48,6 +48,7 @@ private:
     static void  forward(void *arg);
     bool server_connect();
     int send_all(char *buf,int size);
+    static void timer_fuc(void *arg);
     int client_socket;
 private:
     static std::vector<server *> server_Pool;
@@ -58,6 +59,7 @@ private:
     unsigned char *encry_data;
     command_process *commandProcess;
     unsigned int send_sn;
+    char heart_beat;
 private:
     std::mutex mutex_client_socket;
     std::condition_variable cond_client_socket;

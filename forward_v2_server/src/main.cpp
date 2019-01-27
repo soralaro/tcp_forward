@@ -15,7 +15,7 @@
 int main() {
     signal(SIGPIPE, SIG_IGN);
     forward::setKey(ENCRYP_KEY);
-    ThreadPool::pool_init(MAX_CONNECT+MAX_DEVICE*2);
+    ThreadPool::pool_init(MAX_CONNECT+MAX_DEVICE*3);
     server::server_pool_int(MAX_DEVICE);
     struct sockaddr_in servaddr;
     servaddr.sin_family = AF_INET;

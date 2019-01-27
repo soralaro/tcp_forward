@@ -7,14 +7,14 @@
 
 #define LOCAL_PORT 7102
 #define SERVER_PORT 7101
-#define SERVER_IP "127.0.0.1"
+#define SERVER_IP "45.62.126.40"
 #define MAX_CONNECT 200
 #define ENCRYP_KEY  0XAB
 
 int main() {
     signal(SIGPIPE, SIG_IGN);
     forward::setKey(ENCRYP_KEY);
-    ThreadPool::pool_init(MAX_CONNECT+2);
+    ThreadPool::pool_init(MAX_CONNECT+3);
     forward::forward_pool_int(MAX_CONNECT);
     server Server;
     Server.init(SERVER_IP,SERVER_PORT);

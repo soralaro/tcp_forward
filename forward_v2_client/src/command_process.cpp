@@ -257,7 +257,7 @@ void command_process::rcv_comm_process(MSG Msg)
         }
         default:
         {
-            DGDBG("rcv_comm_process,command=default=%d,command.size=%d,socket_id=%d",command.com,command.size,command.socket_id);
+            DGDBG("rcv_comm_process,command=default=%x,command.size=%x,socket_id=%x",command.com,command.size,command.socket_id);
             break;
         }
     }

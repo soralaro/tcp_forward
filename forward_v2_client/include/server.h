@@ -45,6 +45,7 @@ private:
     static void server_forward(void *arg);
     bool server_connect();
     static int send_all(int socket, char *buf,int size);
+    static void timer_fuc(void *arg);
     int server_socket;
     struct sockaddr_in servaddr;
 private:
@@ -56,6 +57,7 @@ private:
     unsigned char encry_data[BUFFER_SIZE];
     command_process *commandProcess;
     unsigned int send_sn;
+    char heart_beat;
 private:
     std::mutex mutex_connect;
     std::condition_variable cond_connect;

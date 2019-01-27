@@ -271,7 +271,7 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
         }
         default:
             {
-                DGDBG("socket_command: %d",com.com);
+                DGDBG("socket_command: %x",com.com);
                 break;
             }
     }

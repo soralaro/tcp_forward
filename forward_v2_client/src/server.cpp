@@ -61,8 +61,10 @@ void server::init(std::string ip ,int port) {
     servaddr.sin_port = htons(port);  ///服务器端口
     servaddr.sin_addr.s_addr = inet_addr(ip.c_str());  ///服务器ip
     server_socket = socket(AF_INET,SOCK_STREAM, 0);
+    heart_beat=0;
     ThreadPool::pool_add_worker(server_rcv, this);
     ThreadPool::pool_add_worker(server_forward, this);
+    ThreadPool::pool_add_worker(timer_fuc, this);
 
 }
 bool server::add_forward(unsigned int g_id, int socket_int) {
@@ -113,10 +115,39 @@ void server::release()
     close(server_socket);
     server_socket = socket(AF_INET,SOCK_STREAM, 0);
     send_sn=0;
+    heart_beat=0;
     DGDBG("id=%d release end !\n",id);
 }
 
+void server::timer_fuc(void *arg)
+{
 
+    server *this_class = (server *)arg;
+    while(!this_class->end_) {
+        sleep(3);
+        if(this_class->connect_state) {
+            this_class->heart_beat++;
+            if (this_class->heart_beat > 10) {
+                this_class->connect_state = false;
+                this_class->heart_beat=0;
+            } else
+            {
+                MSG Msg;
+                Msg.socket_id=2;
+                Msg.size=sizeof(COMMANT);
+                Msg.type=MSG_TPY::msg_heart_beat;
+                COMMANT commant;
+                commant.size=sizeof(COMMANT);
+                commant.socket_id=2;
+                commant.com=(unsigned int)socket_command::heart_beat;
+                unsigned  char *buf=new unsigned char [sizeof(COMMANT)];
+                memcpy(buf,&commant,sizeof(commant));
+                Msg.msg=buf;
+                this_class->q_client_msg.push(Msg);
+            }
+        }
+    }
+}
 void  server::server_forward(void *arg) {
     server *this_class = (server *)arg;
     signal(SIGPIPE, SIG_IGN);
@@ -187,6 +218,7 @@ void server::server_rcv(void *arg) {
              if(!this_class->get_encrypt_state)
                 data_cover((unsigned char *)buffer, len);
             this_class->commandProcess->process((unsigned char*)buffer,len);
+            this_class->heart_beat=0;
         }
         else
         {
