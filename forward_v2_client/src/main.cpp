@@ -9,7 +9,7 @@
 #define SERVER_PORT 7101
 #define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 200
-#define ENCRYP_KEY  0XAB
+#define ENCRYP_KEY  0X56
 
 int main() {
     signal(SIGPIPE, SIG_IGN);
@@ -17,7 +17,9 @@ int main() {
     ThreadPool::pool_init(MAX_CONNECT+3);
     forward::forward_pool_int(MAX_CONNECT);
     server Server;
+    Server.setKey(ENCRYP_KEY);
     Server.init(SERVER_IP,SERVER_PORT);
+
     int conn;
     int ss = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in local_sockaddr;

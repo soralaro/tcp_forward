@@ -6,7 +6,7 @@
 #include "../include/server.h"
 
 
-unsigned char server::encryp_key=0xab;
+unsigned char server::encryp_key=0x55;
 void server::setKey(unsigned  char input_key)
 {
     encryp_key=input_key;

@@ -8,7 +8,7 @@
 #include <algorithm>
 
 
-unsigned char server::encryp_key=0xAB;
+unsigned char server::encryp_key=0x55;
 std::vector<server *> server::server_Pool;
 void server::setKey(unsigned  char input_key)
 {
