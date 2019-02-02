@@ -10,7 +10,8 @@
 #define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 200
 #define MAX_DEVICE 8
-#define ENCRYP_KEY  0X56
+#define ENCRYP_KEY  0XAA
+#define ENCRYP_KEY_2  0XAE
 
 int main() {
     signal(SIGPIPE, SIG_IGN);
@@ -72,6 +73,7 @@ int main() {
         if(Server!=NULL) {
             static unsigned  int id=0;
             Server->setKey(ENCRYP_KEY);
+            Server->setKey_2(ENCRYP_KEY_2);
             Server->init(id++,conn);
             printf("new connect id=%d \n",Server->id);
         } else

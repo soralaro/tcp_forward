@@ -22,6 +22,7 @@ command_process::~command_process()
         iter=mforward.erase(iter);
     }
 }
+
 void command_process::data_encrypt(unsigned char *buf, unsigned int cur,int len)
 {
 
@@ -38,7 +39,17 @@ void command_process::data_encrypt(unsigned char *buf, unsigned int cur,int len)
     {
        buf[i]=(buf[i]^enp[i]);
     }
+}
 
+void command_process::encrypt_code_resolv()
+{
+    unsigned char a=encry_data[encryp_key_2];
+    a=a^encryp_key;
+    for(int i=sizeof(COMMANT);i<encry_rcv_len;i++)
+    {
+        encry_data[i]=(encry_data[i]^encryp_key_2^a);
+    }
+    encry_data[encryp_key_2]=a^encryp_key;
 }
 
 void command_process::erease_mforward(unsigned int socketid) {
@@ -247,6 +258,7 @@ void command_process::rcv_comm_process(MSG Msg)
             encry_rcv_len+=Msg.size;
             if(state == com_wait_star)
             {
+                encrypt_code_resolv();
                 *get_encrypt_state=true;
                 DGDBG("rcv_comm_process,command=encrypt,socket_id=%d,encry_rcv_len=%d",command.socket_id,encry_rcv_len);
                 for(unsigned int i=0;i<encry_rcv_len;i++)

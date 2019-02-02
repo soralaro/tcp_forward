@@ -35,6 +35,7 @@ public:
     ~server();
     void release();
     static void setKey(unsigned  char input_key);
+    static void setKey_2(unsigned  char input_key){encryp_key_2=input_key;};
     bool add_forward(unsigned int g_id,int socket_int);
     int id;
     BlockQueue<MSG> q_client_msg;
@@ -54,6 +55,7 @@ private:
     bool end_;
     bool forward_end;
     static  unsigned  char encryp_key;
+    static  unsigned  char encryp_key_2;
     unsigned char encry_data[BUFFER_SIZE];
     command_process *commandProcess;
     unsigned int send_sn;

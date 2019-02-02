@@ -43,6 +43,8 @@ public:
    void  add_mforward(forward * Forward);
    void relase();
    bool *get_encrypt_state;
+   unsigned  char encryp_key_2;
+   unsigned  char encryp_key;
    unsigned char *encry_data;
    unsigned int encry_rcv_len;
 private:
@@ -54,6 +56,7 @@ private:
     BlockQueue<MSG> *q_client_msg;
     void rcv_comm_process(MSG Msg);
     void data_encrypt(unsigned char *buf, unsigned int cur,int len);
+    void encrypt_code_resolv();
 };
 
 #endif //GFW_COMMAND_PROCESS_H

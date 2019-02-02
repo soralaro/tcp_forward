@@ -7,6 +7,7 @@
 
 
 unsigned char server::encryp_key=0x55;
+unsigned char server::encryp_key_2=0xae;
 void server::setKey(unsigned  char input_key)
 {
     encryp_key=input_key;
@@ -62,6 +63,8 @@ void server::init(std::string ip ,int port) {
     servaddr.sin_addr.s_addr = inet_addr(ip.c_str());  ///服务器ip
     server_socket = socket(AF_INET,SOCK_STREAM, 0);
     heart_beat=0;
+    commandProcess->encryp_key_2=encryp_key_2;
+    commandProcess->encryp_key=encryp_key;
     ThreadPool::pool_add_worker(server_rcv, this);
     ThreadPool::pool_add_worker(server_forward, this);
     ThreadPool::pool_add_worker(timer_fuc, this);

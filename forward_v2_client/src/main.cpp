@@ -9,7 +9,8 @@
 #define SERVER_PORT 7101
 #define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 200
-#define ENCRYP_KEY  0X56
+#define ENCRYP_KEY  0XAA
+#define ENCRYP_KEY_2  0XAE
 
 int main() {
     signal(SIGPIPE, SIG_IGN);
@@ -18,6 +19,7 @@ int main() {
     forward::forward_pool_int(MAX_CONNECT);
     server Server;
     Server.setKey(ENCRYP_KEY);
+    Server.setKey_2(ENCRYP_KEY_2);
     Server.init(SERVER_IP,SERVER_PORT);
 
     int conn;
@@ -54,6 +56,7 @@ int main() {
         ret = setsockopt(conn, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
         if (ret < 0) {
             perror("setsockopt SO_RCVTIMEO");
+#define ENCRYP_KEY  0XC5
             exit(1);
         }
 

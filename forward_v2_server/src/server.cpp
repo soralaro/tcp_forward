@@ -9,6 +9,7 @@
 
 
 unsigned char server::encryp_key=0x55;
+unsigned char server::encryp_key_2=0xae;
 std::vector<server *> server::server_Pool;
 void server::setKey(unsigned  char input_key)
 {
@@ -21,6 +22,11 @@ void server::data_cover(unsigned char *buf, int len)
     for(int i=0;i<len;i++)
     {
         buf[i]=(buf[i]^encryp_key);
+    }
+    for(int i=sizeof(COMMANT)*2;i<len;i++)
+    {
+        if(i!=(encryp_key_2+sizeof(COMMANT)))
+            buf[i]=(buf[i]^buf[encryp_key_2+sizeof(COMMANT)]^encryp_key_2);
     }
 }
 void server::data_encrypt(unsigned char *buf, int len)
@@ -265,7 +271,7 @@ void  server::forward(void *arg) {
                       commant.com);
                 memcpy(buf, &commant, sizeof(commant));
                 if (Msg.type == MSG_TPY::msg_encrypt)
-                    data_cover((unsigned char *) buf, Msg.size);
+                    this_class->data_cover((unsigned char *) buf, Msg.size);
                 else
                     this_class->data_encrypt((unsigned char *) buf, Msg.size);
 
