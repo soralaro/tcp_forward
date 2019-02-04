@@ -133,6 +133,7 @@ void server::timer_fuc(void *arg)
             if (this_class->heart_beat > 10) {
                 this_class->connect_state = false;
                 this_class->heart_beat=0;
+                DGERR("heart_beat time out!");
             } else
             {
                 MSG Msg;
@@ -268,7 +269,7 @@ bool server::server_connect()
     if (connect(server_socket, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
         // perror("server connect");
         close(server_socket);
-        DGDBG("server connect fail ,id=%d",id);
+        DGERR("server connect fail ,id=%d",id);
         return false;
     }
     else {

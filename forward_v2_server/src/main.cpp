@@ -3,31 +3,97 @@
 //
 #include "../include/forward.h"
 #include "../include/server.h"
+#include <algorithm>
 #define ListenQueue 200
 
-#define LOCAL_PORT 7101
-#define SERVER_PORT 6019
+#define LOCAL_PORT 7000
+#define SERVER_PORT 6000
 #define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 200
 #define MAX_DEVICE 8
 #define ENCRYP_KEY  0XAA
-#define ENCRYP_KEY_2  0XAE
+#define ENCRYP_KEY_2  0XCC
 
-int main() {
+char* getCmdOption(char ** begin, char ** end, const std::string & option)
+{
+    char ** itr = std::find(begin, end, option);
+    if (itr != end && ++itr != end)
+    {
+        return *itr;
+    }
+    return 0;
+}
+
+int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::string& server_ip,int& max_connect,unsigned char& encryp_key,unsigned char& encryp_key_2,int &max_device)
+{
+    char *stop_str;
+    char * local_port_c = getCmdOption(argv, argv + argc, "-l");
+    if (local_port_c)
+        local_port = (int)strtol(local_port_c,&stop_str,10);
+
+    char * server_port_c = getCmdOption(argv, argv + argc, "-s");
+    if (server_port_c)
+        server_port = (int)strtol(server_port_c,&stop_str,10);
+
+    char * server_ip_c = getCmdOption(argv, argv + argc, "-i");
+    if (server_ip_c)
+        server_ip = std::string(server_ip_c);
+
+    char * max_connect_c = getCmdOption(argv, argv + argc, "-n");
+    if (max_connect_c)
+        max_connect = (int)strtol(max_connect_c,&stop_str,10);
+
+    char * encryp_key_c = getCmdOption(argv, argv + argc, "-h");
+    if (encryp_key_c)
+        encryp_key =(u_char)strtol(encryp_key_c,&stop_str,16);
+
+    char * encryp_key_2_c = getCmdOption(argv, argv + argc, "-e");
+    if (encryp_key_2_c)
+        encryp_key_2=(u_char)strtol(encryp_key_2_c,&stop_str,16);
+
+    char * max_device_c = getCmdOption(argv, argv + argc, "-m");
+    if (max_device_c)
+        max_device = (int)strtol(max_device_c,&stop_str,10);
+
+    if (argc<2)
+    {
+        std::cout << "Usage: ./app_name "
+                  << "-l local_port "
+                  << "-s SERVER_PORT "
+                  << "-i server_ip "
+                  << "-n MAX_CONNECT "
+                  << "-h encryp_key "
+                  << "-e encryp_key_2 "
+                  << "-m max_device "
+                  << std::endl;
+        return -1;
+    }
+    return 0;
+}
+int main(int argc, char** argv) {
     signal(SIGPIPE, SIG_IGN);
-    forward::setKey(ENCRYP_KEY);
-    ThreadPool::pool_init(MAX_CONNECT+MAX_DEVICE*3);
-    server::server_pool_int(MAX_DEVICE);
+    int local_port=LOCAL_PORT;
+    int server_port=SERVER_PORT;
+    std::string server_ip=SERVER_IP;
+    int max_connect=MAX_CONNECT;
+    unsigned char encryp_key=ENCRYP_KEY;
+    unsigned char encryp_key_2=ENCRYP_KEY_2;
+    int max_device=MAX_DEVICE;
+
+    cmdParse(argc, argv, local_port, server_port, server_ip, max_connect, encryp_key, encryp_key_2,max_device);
+    forward::setKey(encryp_key);
+    ThreadPool::pool_init(max_connect+max_device*3);
+    server::server_pool_int(max_device);
     struct sockaddr_in servaddr;
     servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(SERVER_PORT);  ///服务器端口
-    servaddr.sin_addr.s_addr = inet_addr(SERVER_IP);  ///服务器ip
-    forward::forward_pool_int(MAX_CONNECT,servaddr);
+    servaddr.sin_port = htons(server_port);  ///服务器端口
+    servaddr.sin_addr.s_addr = inet_addr(server_ip.c_str());  ///服务器ip
+    forward::forward_pool_int(max_connect,servaddr);
     int conn;
     int ss = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in local_sockaddr;
     local_sockaddr.sin_family = AF_INET;
-    local_sockaddr.sin_port = htons(LOCAL_PORT);
+    local_sockaddr.sin_port = htons(local_port);
     local_sockaddr.sin_addr.s_addr =htonl(INADDR_ANY);// inet_addr("192.168.123.227");  ///服务器ip //htonl(INADDR_ANY);
     if(bind(ss, (struct sockaddr* ) &local_sockaddr, sizeof(local_sockaddr))==-1) {
         perror("bind");
@@ -72,8 +138,8 @@ int main() {
         server *Server = server::server_pool_get();
         if(Server!=NULL) {
             static unsigned  int id=0;
-            Server->setKey(ENCRYP_KEY);
-            Server->setKey_2(ENCRYP_KEY_2);
+            Server->setKey(encryp_key);
+            Server->setKey_2(encryp_key_2);
             Server->init(id++,conn);
             printf("new connect id=%d \n",Server->id);
         } else
