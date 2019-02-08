@@ -13,7 +13,7 @@
  */
 
 #include "stdlib.h"
-#include "d3des.h"
+#include "d3des_de.h"
 typedef union {
 	unsigned long blok[2];
 	unsigned short word[4];
@@ -437,7 +437,7 @@ register unsigned long *block, *keys;
 
 #ifdef D2_DES
 
-void des2key(unsigned char *hexkey, short mode)		/* stomps on Kn3 too */
+void des2key_de(unsigned char *hexkey, short mode)		/* stomps on Kn3 too */
 //unsigned char *hexkey;			/* unsigned char[16] */
 //short mode;
 {
@@ -464,7 +464,7 @@ unsigned char *from, *into;		/* unsigned char[8] */
 	return;
 	}
 
-void D2des(from, into)
+void D2des_de(from, into)
 unsigned char *from;			/* unsigned char[16] */
 unsigned char *into;			/* unsigned char[16] */
 {

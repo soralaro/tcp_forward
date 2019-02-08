@@ -13,7 +13,7 @@
 #include <sys/shm.h>
 #include <thread>
 #include <iostream>
-#define PORT 7001
+#define PORT 7101
 #define QUEUE 20
 #define STOP_SSR  0x11
 #define STAR_SSR  0x22

@@ -22,6 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
+/* A useful alias on 68000-ish machines, but NOT USED HERE. */
 
 
 //extern void deskey(unsigned char *, short);
@@ -51,8 +52,8 @@ extern "C" {
 
 #ifdef D2_DES
 
-#define desDkey(a,b)	des2key((a),(b))
-extern void des2key(unsigned char *, short);
+#define desDkey(a,b)	des2key_de((a),(b))
+extern void des2key_de(unsigned char *, short);
 /*		      hexkey[16]     MODE
  * Sets the internal key registerS according to the hexadecimal
  * keyS contained in the 16 bytes of hexkey, according to the DES,
@@ -67,7 +68,7 @@ extern void des2key(unsigned char *, short);
  * into the block at address 'to'.  They can be the same.
  */
 
-extern void D2des(unsigned char *, unsigned char *);
+extern void D2des_de(unsigned char *, unsigned char *);
 /*		    from[16]	      to[16]
  * Encrypts/Decrypts (according to the keyS currently loaded in the
  * internal key registerS) one block of SIXTEEN bytes at address 'from'

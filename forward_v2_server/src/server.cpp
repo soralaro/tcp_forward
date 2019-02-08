@@ -6,10 +6,12 @@
 #include "../include/server.h"
 #include "../include/forward.h"
 #include <algorithm>
+#include "encrypt.h"
 
 
 unsigned char server::encryp_key=0x55;
 unsigned char server::encryp_key_2=0xae;
+char server::des_key[17];
 std::vector<server *> server::server_Pool;
 void server::setKey(unsigned  char input_key)
 {
@@ -67,6 +69,12 @@ void server::server_pool_destroy()
         delete server_Pool[i];
     }
 }
+void server::setDesKey(char *key)
+{
+    memset(des_key,0,sizeof(des_key));
+    memcpy(des_key,key,sizeof(des_key)-1);
+    des_encrypt_init(des_key);
+};
 server::server()
 {
     end_=true;
@@ -270,12 +278,17 @@ void  server::forward(void *arg) {
                 DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ", commant.size, commant.sn, commant.socket_id,
                       commant.com);
                 memcpy(buf, &commant, sizeof(commant));
-                if (Msg.type == MSG_TPY::msg_encrypt)
+                if (Msg.type == MSG_TPY::msg_encrypt) {
                     this_class->data_cover((unsigned char *) buf, Msg.size);
-                else
-                    this_class->data_encrypt((unsigned char *) buf, Msg.size);
 
+                }
+                else {
+                    this_class->data_encrypt((unsigned char *) buf, Msg.size);
+                }
+
+                des_encrypt(buf,sizeof(commant));
                 int ret = this_class->send_all(buf, Msg.size);
+
                 delete[] buf;
                 if (ret < 0) {
                     // DGDBG("id =%d send <0,server_forward\n",this_class->id);

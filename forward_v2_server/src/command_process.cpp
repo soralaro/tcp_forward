@@ -2,6 +2,7 @@
 // Created by deepglint on 19-1-13.
 //
 #include "command_process.h"
+#include "encrypt.h"
 
 void command_process::data_encrypt(unsigned char *buf, unsigned int cur,int len)
 {
@@ -82,6 +83,8 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
             case com_wait_star: {
                 if (pro_len >= sizeof(command)) {
                     memcpy(&command, buf, sizeof(command));
+
+                    des_decrypt((u_char *)&command,sizeof(command));
                     data_encrypt((unsigned char *)(&command),0,sizeof(command));
                     buf += sizeof(command);
                     pro_len -= sizeof(command);
@@ -108,6 +111,8 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                 unsigned int head_remain = sizeof(command) - commant_cur;
                 if (pro_len >= head_remain) {
                     memcpy((unsigned char *) (&command) + commant_cur, buf, head_remain);
+                    des_decrypt((u_char *)&command,sizeof(command));
+
                     data_encrypt((unsigned char *)(&command),0,sizeof(command));
                     buf += head_remain;
                     pro_len -= head_remain;

@@ -4,10 +4,12 @@
 
 #include"omp.h"
 #include "../include/server.h"
+#include "encrypt.h"
 
 
 unsigned char server::encryp_key=0x55;
 unsigned char server::encryp_key_2=0xae;
+char server::des_key[17];
 void server::setKey(unsigned  char input_key)
 {
     encryp_key=input_key;
@@ -65,6 +67,7 @@ void server::init(std::string ip ,int port) {
     heart_beat=0;
     commandProcess->encryp_key_2=encryp_key_2;
     commandProcess->encryp_key=encryp_key;
+    des_encrypt_init(des_key);
     ThreadPool::pool_add_worker(server_rcv, this);
     ThreadPool::pool_add_worker(server_forward, this);
     ThreadPool::pool_add_worker(timer_fuc, this);
@@ -184,8 +187,9 @@ void  server::server_forward(void *arg) {
                   commant.com);
             memcpy(buf, &commant, sizeof(commant));
             this_class->data_encrypt((unsigned char *) buf, Msg.size);
-
+            des_encrypt(buf,sizeof(commant));
             int ret = send_all(this_class->server_socket, buf, Msg.size);
+
             delete[] buf;
             if (ret < 0) {
                 DGDBG("id =%d send <0,server_forward\n", this_class->id);
@@ -214,13 +218,12 @@ void server::server_rcv(void *arg) {
                 continue;
             }
         }
-        static char buffer[BUFFER_SIZE];
+        static char buffer[BUFFER_SIZE+1];
         DGDBG("id=%d server waiting rcv! \n",this_class->id);
         int len = recv(this_class->server_socket, buffer,BUFFER_SIZE, 0);
         if (len > 0) {
              DGDBG("server recv len%d\n", len);
-             if(!this_class->get_encrypt_state)
-                data_cover((unsigned char *)buffer, len);
+
             this_class->commandProcess->process((unsigned char*)buffer,len);
             this_class->heart_beat=0;
         }
