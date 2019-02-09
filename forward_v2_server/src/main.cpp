@@ -91,6 +91,7 @@ int main(int argc, char** argv) {
     forward::setKey(encryp_key);
     ThreadPool::pool_init(max_connect+max_device*3);
     server::server_pool_int(max_device);
+    server::setDesKey(des_key);
     struct sockaddr_in servaddr;
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(server_port);  ///服务器端口
