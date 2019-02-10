@@ -24,7 +24,8 @@ char* getCmdOption(char ** begin, char ** end, const std::string & option)
     return 0;
 }
 
-int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::string& server_ip,int& max_connect,unsigned char& encryp_key,unsigned char& encryp_key_2,int &max_device,char *des_key)
+int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::string& server_ip,int& max_connect,unsigned char& encryp_key,
+        unsigned char& encryp_key_2,int &max_device,char *des_key,char *des_key_2)
 {
     char *stop_str;
     char * local_port_c = getCmdOption(argv, argv + argc, "-l");
@@ -59,6 +60,10 @@ int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::st
     if (des_key_c)
         memcpy(des_key,des_key_c,16);
 
+    char * des_key_2_c = getCmdOption(argv, argv + argc, "-k");
+    if (des_key_2_c)
+        memcpy(des_key_2,des_key_2_c,16);
+
     if (argc<2)
     {
         std::cout << "Usage: ./app_name "
@@ -70,6 +75,7 @@ int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::st
                   << "-e encryp_key_2 "
                   << "-m max_device "
                   << "-d des_key "
+                  << "-k des_key_2 "
                   << std::endl;
         return -1;
     }
@@ -86,12 +92,15 @@ int main(int argc, char** argv) {
     int max_device=MAX_DEVICE;
     char *default_des_key = "~!@#$%^&*()_+QWE";
     char des_key[17];
+    char des_key_2[17];
     memcpy(des_key,default_des_key,sizeof(des_key));
-    cmdParse(argc, argv, local_port, server_port, server_ip, max_connect, encryp_key, encryp_key_2,max_device,des_key);
+    memcpy(des_key_2,default_des_key,sizeof(des_key_2));
+    cmdParse(argc, argv, local_port, server_port, server_ip, max_connect, encryp_key, encryp_key_2,max_device,des_key,des_key_2);
     forward::setKey(encryp_key);
     ThreadPool::pool_init(max_connect+max_device*3);
     server::server_pool_int(max_device);
     server::setDesKey(des_key);
+    server::setDesKey_2(des_key_2);
     struct sockaddr_in servaddr;
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(server_port);  ///服务器端口

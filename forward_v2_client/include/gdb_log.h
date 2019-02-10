@@ -26,7 +26,7 @@ typedef enum {
 #define    DG_USE_DUMP      1
 #define    DG_USE_LOG       1
 
-#define DG_LOG_LEVEL  DGLOG_LVL_ERR
+#define DG_LOG_LEVEL  DGLOG_LVL_FATEL
 void dg_log(const char *fmt, ...);
 void dg_dump(char *mem, unsigned long len);
 

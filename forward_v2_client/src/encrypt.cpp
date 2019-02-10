@@ -7,9 +7,13 @@
 #define DE1	1	/* MODE == decrypt */
 extern "C" {
 extern void des2key(unsigned char *, short);
+extern void des2key_2(unsigned char *, short);
 extern void D2des(unsigned char *, unsigned char *);
+extern void D2des_2(unsigned char *, unsigned char *);
 extern void des2key_de(unsigned char *, short);
+extern void des2key_de_2(unsigned char *, short);
 extern void D2des_de(unsigned char *, unsigned char *);
+extern void D2des_de_2(unsigned char *, unsigned char *);
 }
 using namespace std;
 static const char *default_key = "~!@#$%^&*()_+QWE";
@@ -26,24 +30,16 @@ void des_encrypt_init(const char *key)
         des2key_de((unsigned char *) key, DE1);
     }
 }
-//assuming 16-byte src string
-void do_encryption(string& file_to_be_encrypt, string& encrypted_file)
+void des_encrypt_init_2(const char *key)
 {
-    for (unsigned i = 0; i < file_to_be_encrypt.size(); i += LENGTH)
+    if(key==NULL) {
+        des2key_2((unsigned char *) default_key, EN0);
+        des2key_de_2((unsigned char *) default_key, DE1);
+    }
+    else
     {
-        std::string msg = file_to_be_encrypt.substr(i, LENGTH);
-        unsigned char * encrypt = new unsigned char[LENGTH]();
-        D2des((unsigned char*)msg.data(),encrypt);
-        if(file_to_be_encrypt.size() - i < LENGTH)
-        {
-            string encrypt_string((char *)encrypt, file_to_be_encrypt.size() - i);
-            encrypted_file += encrypt_string;
-        }
-        else
-        {
-            string encrypt_string((char *)encrypt, LENGTH);
-            encrypted_file += encrypt_string;
-        }
+        des2key_2((unsigned char *) key, EN0);
+        des2key_de_2((unsigned char *) key, DE1);
     }
 }
 
@@ -75,34 +71,35 @@ void des_decrypt(unsigned char *buf,int size)
         p+=LENGTH;
     }
 }
-
-void do_decryption(string& file_to_be_decrpt, string& decrpted_file)
+void des_encrypt_2(unsigned char *buf,int size)
 {
-    string decrypted_message;
-
-    for (unsigned i = 0; i < file_to_be_decrpt.size(); i += LENGTH)
+    unsigned char encrypt[LENGTH];
+    unsigned char *p=buf;
+    for(int i=0;i<size;i+=LENGTH)
     {
-        std::string content = file_to_be_decrpt.substr(i, LENGTH);
-
-        unsigned char *decrypt = new unsigned char[LENGTH]();
-
-        unsigned char *new_string = (unsigned char *)content.data();
-
-
-        D2des_de(new_string,decrypt);
-
-        if(file_to_be_decrpt.size() - i < LENGTH)
-        {
-            string decrypt_string((char *)decrypt, file_to_be_decrpt.size() - i);
-            decrpted_file += decrypt_string;
-        }
+        D2des_2(p,encrypt);
+        if(size-i<LENGTH)
+            memcpy(p,encrypt,size-i);
         else
-        {
-            string decrypt_string((char *)decrypt, LENGTH);
-            decrpted_file += decrypt_string;
-        }
+            memcpy(p,encrypt,LENGTH);
+        p+=LENGTH;
     }
 }
+void des_decrypt_2(unsigned char *buf,int size)
+{
+    unsigned char encrypt[LENGTH];
+    unsigned char *p=buf;
+    for(int i=0;i<size;i+=LENGTH)
+    {
+        D2des_de_2(p,encrypt);
+        if(size-i<LENGTH)
+            memcpy(p,encrypt,size-i);
+        else
+            memcpy(p,encrypt,LENGTH);
+        p+=LENGTH;
+    }
+}
+
 #if 0
 
 int main(int argc, char *argv[])
