@@ -26,7 +26,7 @@ char* getCmdOption(char ** begin, char ** end, const std::string & option)
     return 0;
 }
 
-int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::string& server_ip,int& max_connect,unsigned char& encryp_key,unsigned char& encryp_key_2,char *des_key)
+int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::string& server_ip,int& max_connect,unsigned char& encryp_key,unsigned char& encryp_key_2,char *des_key,char *des_key_2)
 {
     char *stop_str;
     char * local_port_c = getCmdOption(argv, argv + argc, "-l");
@@ -57,6 +57,11 @@ int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::st
     if (des_key_c)
         memcpy(des_key,des_key_c,16);
 
+    char * des_key_2_c = getCmdOption(argv, argv + argc, "-k");
+    if (des_key_2_c)
+        memcpy(des_key_2,des_key_2_c,16);
+
+
     if (argc<2)
     {
         std::cout << "Usage: ./app_name "
@@ -67,6 +72,7 @@ int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::st
                   << "-h encryp_key "
                   << "-e encryp_key_2 "
                   << "-d des_key "
+                  << "-k des_key_2 "
                   << std::endl;
         return -1;
     }
@@ -98,8 +104,11 @@ int main(int argc, char** argv) {
     char *default_des_key = "~!@#$%^&*()_+QWE";
     char des_key[17];
     memcpy(des_key,default_des_key,sizeof(des_key));
-    cmdParse(argc, argv, local_port, server_port, server_ip, max_connect, encryp_key, encryp_key_2,des_key);
+    char des_key_2[17];
+    memcpy(des_key_2,default_des_key,sizeof(des_key_2));
+    cmdParse(argc, argv, local_port, server_port, server_ip, max_connect, encryp_key, encryp_key_2,des_key,des_key_2);
     printf("des_key=%s \n",des_key);
+    printf("des_key_2=%s \n",des_key_2);
     forward::setKey(encryp_key);
     ThreadPool::pool_init(max_connect+3);
     forward::forward_pool_int(max_connect);
@@ -107,6 +116,7 @@ int main(int argc, char** argv) {
     Server.setKey(encryp_key);
     Server.setKey_2(encryp_key_2);
     Server.setDesKey(des_key);
+    Server.setDesKey_2(des_key_2);
     Server.init(server_ip,server_port);
 
     int conn;

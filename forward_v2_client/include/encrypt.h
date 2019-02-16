@@ -6,10 +6,13 @@
 #define GFW_ENCRYPT_H
 #include <string>
 #include <string.h>
-
+#define ALIGN_16(x) (((x)+15)/16*16)
 void des_encrypt_init(const char *key);
-void do_encryption(std::string& file_to_be_encrypt, std::string& encrypted_file);
-void do_decryption(std::string& file_to_be_decrpt, std::string& decrpted_file);
+
 void des_encrypt(unsigned char *buf,int size);
 void des_decrypt(unsigned char *buf,int size);
+void des_encrypt_init_2(const char *key);
+
+void des_encrypt_2(unsigned char *buf,int size);
+void des_decrypt_2(unsigned char *buf,int size);
 #endif //GFW_ENCRYPT_H

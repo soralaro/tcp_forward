@@ -41,6 +41,7 @@ public:
     static void setKey(unsigned  char input_key);
     static void setKey_2(unsigned  char input_key){encryp_key_2=input_key;};
     static void setDesKey(char *key){memcpy(des_key,key,sizeof(des_key)-1);};
+    static void setDesKey_2(char *key){memcpy(des_key_2,key,sizeof(des_key_2)-1);};
     bool add_forward(unsigned int g_id,int socket_int);
     int id;
     BlockQueue<MSG_COM> q_client_msg;
@@ -62,6 +63,7 @@ private:
     static  unsigned  char encryp_key;
     static  unsigned  char encryp_key_2;
     static char des_key[17];
+    static char des_key_2[17];
     unsigned char encry_data[BUFFER_SIZE];
     command_process *commandProcess;
     unsigned int send_sn;

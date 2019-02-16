@@ -52,6 +52,7 @@ private:
     int commant_cur;
     unsigned int current_max_socket_id;
     COMMANT_STATE  state;
+    u_char  command_Buf[BUFFER_SIZE+sizeof(COMMANT)+1];
     std::map <unsigned int,forward *> mforward;
     unsigned int max_sn;
 };

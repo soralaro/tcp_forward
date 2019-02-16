@@ -4,7 +4,6 @@
 #include "command_process.h"
 #include "encrypt.h"
 
-
 command_process::command_process(BlockQueue<MSG_COM> *q_msg)
 {
     state =com_wait_star;
@@ -12,6 +11,7 @@ command_process::command_process(BlockQueue<MSG_COM> *q_msg)
     current_max_socket_id=0;
     q_client_msg=q_msg;
     encry_rcv_len=0;
+    memset(command_Buf,0,sizeof(command_Buf));
 }
 
 command_process::~command_process()
@@ -155,20 +155,21 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
             }
 
             case com_head_rcv_end: {
-                Msg.type = MSG_TPY::msg_server_rcv;
-                Msg.msg = buf;
-                unsigned int commant_remain = command.size - sizeof(command);
+                unsigned int commant_remain = ALIGN_16(command.size) - sizeof(command);
                 if (pro_len >= commant_remain) {
                     Msg.size = commant_remain;
-                    data_encrypt(buf,commant_cur,commant_remain);
+                    des_decrypt_2(buf,commant_remain);
+                    data_encrypt(buf,commant_cur,command.size - sizeof(command));
+                    Msg.type = MSG_TPY::msg_server_rcv;
+                    Msg.msg = buf;
+                    Msg.size = command.size-sizeof(command);
                     buf += commant_remain;
                     pro_len -= commant_remain;
                     commant_cur = 0;
                     DGDBG(" command_process state = com_wait_star,pro_len=%d",pro_len);
                     state = com_wait_star;
                 } else {
-                    Msg.size = pro_len;
-                    data_encrypt(buf,commant_cur,pro_len);
+                    memcpy(command_Buf,buf,pro_len);
                     buf += pro_len;
                     commant_cur += pro_len;
                     pro_len = 0;
@@ -178,20 +179,21 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                 break;
             }
             case com_data_rcv: {
-                Msg.type = MSG_TPY::msg_server_rcv;
-                Msg.msg = buf;
-                unsigned int commant_remain = command.size - commant_cur;
+                unsigned int commant_remain = ALIGN_16(command.size) - commant_cur;
                 if (pro_len >= commant_remain) {
-                    Msg.size = commant_remain;
-                    data_encrypt(buf,commant_cur,commant_remain);
+                    memcpy(command_Buf+commant_cur-sizeof(command),buf,commant_remain);
+                    des_decrypt_2(command_Buf, ALIGN_16(command.size)-sizeof(command));
+                    data_encrypt(command_Buf,sizeof(command),command.size-sizeof(command));
+                    Msg.type = MSG_TPY::msg_server_rcv;
+                    Msg.msg = command_Buf;
+                    Msg.size = command.size-sizeof(command);
                     buf += commant_remain;
                     pro_len -= commant_remain;
                     commant_cur = 0;
                     DGDBG(" command_process state = com_wait_star pro_len=%d",pro_len);
                     state = com_wait_star;
                 } else {
-                    Msg.size = pro_len;
-                    data_encrypt(buf,commant_cur,pro_len);
+                    memcpy(command_Buf+commant_cur-sizeof(command),buf,pro_len);
                     buf += pro_len;
                     commant_cur += pro_len;
                     pro_len = 0;
