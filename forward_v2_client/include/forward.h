@@ -5,21 +5,25 @@
 #ifndef PROJECT_FORWAR_H
 #define PROJECT_FORWAR_H
 #include <sys/types.h>
+#ifdef _WIN64  
+#include <winsock2.h>
+#else
 #include <sys/socket.h>
-#include <stdio.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netinet/tcp.h>
+#include <sys/shm.h>
+#endif
+#include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <sys/shm.h>
 #include <thread>
 #include <iostream>
 #include <queue>
 #include <semaphore.h>
 #include <signal.h>
-#include <netinet/tcp.h>
 #include <map>
 #include "gdb_log.h"
 #include "thread_pool.h"
@@ -31,7 +35,7 @@ class forward
 {
 public:
     forward();
-    void init(unsigned int g_id,int socket_int,BlockQueue<MSG> *q_msg);
+    void init(unsigned int g_id,int socket_int,BlockQueue<MSG_COM> *q_msg);
     ~forward();
     void release();
     int send_all(char *buf,int size);
@@ -46,7 +50,7 @@ public:
 private:
     static std::vector<forward *> forward_Pool;
     static void client_rcv(void *arg);
-    BlockQueue<MSG> *q_client_msg;
+    BlockQueue<MSG_COM> *q_client_msg;
     int client_socket;
     std::mutex mutex_client_socket;
     std::condition_variable cond_client_socket;

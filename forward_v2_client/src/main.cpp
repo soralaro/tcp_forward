@@ -4,12 +4,16 @@
 #include "../include/forward.h"
 #include "../include/server.h"
 #include <algorithm>
+#ifdef _WIN64
+#include<winsock2.h>
+#include<ws2tcpip.h>
+#endif
 #define ListenQueue 200
 
-#define LOCAL_PORT 7000
-#define SERVER_PORT 7000
+#define LOCAL_PORT 6000
+#define SERVER_PORT 6000
 #define SERVER_IP "127.0.0.1"
-#define MAX_CONNECT 200
+#define MAX_CONNECT 100
 #define ENCRYP_KEY  0XAA
 #define ENCRYP_KEY_2  0XCC
 char* getCmdOption(char ** begin, char ** end, const std::string & option)
@@ -69,7 +73,22 @@ int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::st
     return 0;
 }
 int main(int argc, char** argv) {
+#ifdef _WIN64
+    WORD winSocketVersion;
+    WSADATA wsaDATA;
+    winSocketVersion = MAKEWORD(2,2);
+
+    int return_num;
+    //WinSocket 初始化 
+    return_num = WSAStartup(winSocketVersion,&wsaDATA);
+    if(return_num!=0){
+        std::cout<<"WSAStartup() failed！"<<std::endl;
+        return 0; 
+    }
+#else
     signal(SIGPIPE, SIG_IGN);
+#endif
+
     int local_port=LOCAL_PORT;
     int server_port=SERVER_PORT;
     std::string server_ip=SERVER_IP;
@@ -95,7 +114,7 @@ int main(int argc, char** argv) {
     struct sockaddr_in local_sockaddr;
     local_sockaddr.sin_family = AF_INET;
     local_sockaddr.sin_port = htons(local_port);
-    local_sockaddr.sin_addr.s_addr =htonl(INADDR_ANY);// inet_addr("192.168.123.227");  ///服务器ip //htonl(INADDR_ANY);
+    local_sockaddr.sin_addr.s_addr =htonl(INADDR_ANY);//inet_addr("127.0.0.1");//htonl(INADDR_ANY);
     if(bind(ss, (struct sockaddr* ) &local_sockaddr, sizeof(local_sockaddr))==-1) {
         perror("bind");
         exit(1);
@@ -108,13 +127,25 @@ int main(int argc, char** argv) {
     struct sockaddr_in client_addr;
     socklen_t length = sizeof(client_addr);
     while(1) {
-       // printf("waiting for connet!\n");
+        printf("waiting for connet!\n");
         conn = accept(ss, (struct sockaddr *) &client_addr, &length);
         if (conn < 0) {
             perror("connect");
             continue;
         }
-#if 1
+#ifdef _WIN64
+        int timeout=1000;
+        int ret = setsockopt(conn, SOL_SOCKET, SO_SNDTIMEO,(char *)&timeout, sizeof(timeout));
+        if (ret < 0) {
+            perror("setsockopt SO_SNDTIMEO");
+            exit(1);
+        }
+        ret = setsockopt(conn, SOL_SOCKET, SO_RCVTIMEO,(char *)&timeout, sizeof(timeout));
+        if (ret < 0) {
+            perror("setsockopt SO_RCVTIMEO");
+            exit(1);
+        }
+#else
         struct timeval timeout = {1, 0};//3s
         int ret = setsockopt(conn, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
         if (ret < 0) {
@@ -148,6 +179,8 @@ int main(int argc, char** argv) {
     close(ss);
     ThreadPool::pool_destroy();
     forward::forward_pool_destroy();
-
+#ifdef _WIN64
+    WSACleanup();
+#endif
     return 0;
 }

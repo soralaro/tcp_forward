@@ -5,7 +5,7 @@
 #include "encrypt.h"
 
 
-command_process::command_process(BlockQueue<MSG> *q_msg)
+command_process::command_process(BlockQueue<MSG_COM> *q_msg)
 {
     state =com_wait_star;
     commant_cur=0;
@@ -96,7 +96,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
     unsigned char *buf=data_in;
     unsigned int   pro_len=len;
     while (pro_len>0) {
-        MSG Msg;
+        MSG_COM Msg;
         Msg.size=0;
         switch (state) {
             case com_wait_star: {
@@ -206,7 +206,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
     }
 }
 
-void command_process::rcv_comm_process(MSG Msg)
+void command_process::rcv_comm_process(MSG_COM Msg)
 {
     auto iter=mforward.find(command.socket_id);
     DGDBG("rcv_comm_process_HEAD size=%x,sn=%x,id=%x,com=%x ",command.size,command.sn,command.socket_id,command.com);
@@ -219,7 +219,7 @@ void command_process::rcv_comm_process(MSG Msg)
             {
                 if(iter==mforward.end())
                 {
-                    MSG Msg_sv;
+                    MSG_COM Msg_sv;
                     Msg_sv.type = MSG_TPY::msg_socket_end;
                     char *buffer = new char[BUFFER_SIZE];
                     Msg_sv.socket_id=command.socket_id;

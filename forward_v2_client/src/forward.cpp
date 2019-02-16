@@ -48,7 +48,7 @@ forward::forward() {
     client_socket=-1;
     ThreadPool::pool_add_worker(client_rcv, this);
 }
-void forward::init(unsigned int g_id,int socket_int,BlockQueue<MSG> *q_msg) {
+void forward::init(unsigned int g_id,int socket_int,BlockQueue<MSG_COM> *q_msg) {
     id=g_id;
     free=false;
     client_socket=socket_int;
@@ -98,7 +98,7 @@ void forward::client_rcv(void *arg) {
                     break;
                 }
 
-                MSG Msg;
+                MSG_COM Msg;
                 Msg.type = MSG_TPY::msg_client_rcv;
                 Msg.socket_id=this_class->id;
                 Msg.msg = buffer;
@@ -113,7 +113,17 @@ void forward::client_rcv(void *arg) {
             else {
                 delete[] buffer;
                // DGDBG("id =%d client recv erro \n", this_class->id);
-
+#ifdef _WIN64 
+                //DGDBG("id =%d client recv erro \n",this_class->id);
+                if(errno == EAGAIN||errno == EWOULDBLOCK||errno == EINTR)
+                {
+                    usleep(1000);
+                    DGDBG("id =%d client_rcv erro=%d \n",this_class->id,errno);
+                } else
+                {
+                    break;
+                }
+#else
                 struct tcp_info info;
 
                 int info_len=sizeof(info);
@@ -125,10 +135,11 @@ void forward::client_rcv(void *arg) {
                     break;
                 }
                 usleep(1000);
+#endif
             }
         }
         this_class->end_=true;
-        MSG Msg;
+        MSG_COM Msg;
 
         Msg.type = MSG_TPY::msg_socket_end;
         char *buffer = new char[BUFFER_SIZE];

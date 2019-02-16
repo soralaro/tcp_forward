@@ -5,21 +5,25 @@
 #ifndef PROJECT_SERVER_H
 #define PROJECT_SERVER_H
 #include <sys/types.h>
+#ifdef _WIN64  
+#include <winsock.h>
+#else
 #include <sys/socket.h>
-#include <stdio.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netinet/tcp.h>
+#include <sys/shm.h>
+#endif
+#include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <sys/shm.h>
 #include <thread>
 #include <iostream>
 #include <queue>
 #include <semaphore.h>
 #include <signal.h>
-#include <netinet/tcp.h>
 #include <map>
 #include "gdb_log.h"
 #include "thread_pool.h"
@@ -39,7 +43,7 @@ public:
     static void setDesKey(char *key){memcpy(des_key,key,sizeof(des_key)-1);};
     bool add_forward(unsigned int g_id,int socket_int);
     int id;
-    BlockQueue<MSG> q_client_msg;
+    BlockQueue<MSG_COM> q_client_msg;
 private:
     static void data_cover(unsigned char *buf, int len);
     void data_encrypt(unsigned char *buf, int len);

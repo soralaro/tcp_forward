@@ -36,5 +36,5 @@ typedef struct MSG_struct
     unsigned int socket_id;
     void * msg;
     int  size;
-}MSG;
+}MSG_COM;
 #endif //GFW_COMMAND_H

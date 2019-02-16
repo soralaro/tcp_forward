@@ -5,5 +5,8 @@ link_directories(${CMAKE_CURRENT_LIST_DIR}/lib)
 file(GLOB_RECURSE cpp_files "*.cpp")
 file(GLOB_RECURSE c_files "*.c")
 add_executable(${TARGET_NAME} ${cpp_files} ${c_files})
+IF(WINDOWS)
+target_link_libraries(${TARGET_NAME} -lws2_32)
+endif(WINDOWS)
 
 

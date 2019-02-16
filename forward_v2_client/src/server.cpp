@@ -99,7 +99,7 @@ void server::release()
 {
     if(!forward_end)
     {
-        MSG msg;
+        MSG_COM msg;
         msg.type=MSG_TPY::msg_server_release;
         msg.size=0;
         msg.msg=NULL;
@@ -113,7 +113,7 @@ void server::release()
 
     commandProcess->relase();
     while (!q_client_msg.empty()) {
-        MSG Msg;
+        MSG_COM Msg;
         q_client_msg.pop(Msg);
         char *buf = (char *) Msg.msg;
         delete[] buf;
@@ -139,7 +139,7 @@ void server::timer_fuc(void *arg)
                 DGERR("heart_beat time out!");
             } else
             {
-                MSG Msg;
+                MSG_COM Msg;
                 Msg.socket_id=2;
                 Msg.size=sizeof(COMMANT);
                 Msg.type=MSG_TPY::msg_heart_beat;
@@ -157,7 +157,9 @@ void server::timer_fuc(void *arg)
 }
 void  server::server_forward(void *arg) {
     server *this_class = (server *)arg;
+#ifndef  _WIN64    
     signal(SIGPIPE, SIG_IGN);
+#endif
     std::unique_lock<std::mutex> mlock(this_class->mutex_connect);
     DGDBG("id =%d server_forward start \n",this_class->id);
     while (!this_class->end_) {
@@ -167,7 +169,7 @@ void  server::server_forward(void *arg) {
             this_class->cond_connect.wait(mlock);
         }
         this_class->forward_end= false;
-        MSG Msg;
+        MSG_COM Msg;
         Msg.size=0;
         this_class->q_client_msg.pop(Msg);
         if( Msg.type==MSG_TPY::msg_server_release)
@@ -229,6 +231,19 @@ void server::server_rcv(void *arg) {
         }
         else
         {
+#ifdef _WIN64 
+            //DGDBG("id =%d client recv erro \n",this_class->id);
+            if(errno == EAGAIN||errno == EWOULDBLOCK||errno == EINTR)
+            {
+                usleep(1000);
+                //DGDBG("id =%d client_rcv erro=%d \n",this_class->id,errno);
+            } 
+            else
+            {
+                DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
+                this_class->connect_state=false;
+            }
+#else
             struct tcp_info info;
 
             int info_len=sizeof(info);
@@ -240,6 +255,7 @@ void server::server_rcv(void *arg) {
                this_class->connect_state=false;
             }
             usleep(1000);
+#endif
         }
     }
     DGDBG("id =%d server_rcv exit \n",this_class->id);
@@ -276,7 +292,19 @@ bool server::server_connect()
         return false;
     }
     else {
-#if 1
+#ifdef _WIN64
+        int timeout = 6000;//3s
+        int ret = setsockopt(server_socket, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
+        if (ret < 0) {
+            perror("setsockopt SO_SNDTIMEO");
+            exit(1);
+        }
+        ret = setsockopt(server_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+        if (ret < 0) {
+            perror("setsockopt SO_RCVTIMEO");
+            exit(1);
+        }
+#else
         struct timeval timeout = {6, 0};//3s
         int ret = setsockopt(server_socket, SOL_SOCKET, SO_SNDTIMEO,  &timeout, sizeof(timeout));
         if (ret < 0) {
