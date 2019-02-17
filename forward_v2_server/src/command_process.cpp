@@ -84,7 +84,6 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
             case com_wait_star: {
                 if (pro_len >= sizeof(command)) {
                     memcpy(&command, buf, sizeof(command));
-
                     des_decrypt((u_char *)&command,sizeof(command));
                     data_encrypt((unsigned char *)(&command),0,sizeof(command));
                     buf += sizeof(command);

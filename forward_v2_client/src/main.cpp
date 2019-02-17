@@ -13,7 +13,7 @@
 #define LOCAL_PORT 6000
 #define SERVER_PORT 6000
 #define SERVER_IP "127.0.0.1"
-#define MAX_CONNECT 100
+#define MAX_CONNECT 200
 #define ENCRYP_KEY  0XAA
 #define ENCRYP_KEY_2  0XCC
 char* getCmdOption(char ** begin, char ** end, const std::string & option)
@@ -107,8 +107,6 @@ int main(int argc, char** argv) {
     char des_key_2[17];
     memcpy(des_key_2,default_des_key,sizeof(des_key_2));
     cmdParse(argc, argv, local_port, server_port, server_ip, max_connect, encryp_key, encryp_key_2,des_key,des_key_2);
-    printf("des_key=%s \n",des_key);
-    printf("des_key_2=%s \n",des_key_2);
     forward::setKey(encryp_key);
     ThreadPool::pool_init(max_connect+3);
     forward::forward_pool_int(max_connect);
@@ -137,7 +135,7 @@ int main(int argc, char** argv) {
     struct sockaddr_in client_addr;
     socklen_t length = sizeof(client_addr);
     while(1) {
-        printf("waiting for connet!\n");
+        //printf("waiting for connet!\n");
         conn = accept(ss, (struct sockaddr *) &client_addr, &length);
         if (conn < 0) {
             perror("connect");
