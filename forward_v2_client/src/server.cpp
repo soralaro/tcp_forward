@@ -239,7 +239,7 @@ void server::server_rcv(void *arg) {
             if(errno == EAGAIN||errno == EWOULDBLOCK||errno == EINTR)
             {
                 usleep(1000);
-                //DGDBG("id =%d client_rcv erro=%d \n",this_class->id,errno);
+                DGDBG("id =%d client_rcv erro=%d \n",this_class->id,errno);
             } 
             else
             {

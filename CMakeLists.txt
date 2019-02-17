@@ -28,7 +28,6 @@ set(CMAKE_CXX_FLAGS_DEBUG   "$ENV{CXXFLAGS} -O0 -g -ggdb")
 set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -fpermissive -fno-strict-aliasing -fopenmp")
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall  -fopenmp")
-set(CMAKE_LDFLAGS   "${CMAKE_LDFLAGS} -EB")
 
 include_directories(${CMAKE_SOURCE_DIR}/server)
 link_directories(${LIBRARY_OUTPUT_PATH})

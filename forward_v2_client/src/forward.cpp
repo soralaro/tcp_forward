@@ -114,14 +114,19 @@ void forward::client_rcv(void *arg) {
                 delete[] buffer;
                // DGDBG("id =%d client recv erro \n", this_class->id);
 #ifdef _WIN64 
+                int iErrorCode = WSAGetLastError();
                 //DGDBG("id =%d client recv erro \n",this_class->id);
-                if(errno == EAGAIN||errno == EWOULDBLOCK||errno == EINTR)
+                if(iErrorCode!=0)
                 {
-                    usleep(1000);
-                    DGDBG("id =%d client_rcv erro=%d \n",this_class->id,errno);
+                    DGDBG("id =%d, client_rcv erro=%d \n",this_class->id,iErrorCode);
+                }
+                if(iErrorCode==WSAESHUTDOWN||iErrorCode==WSAECONNABORTED||iErrorCode==WSAECONNRESET||iErrorCode==WSAETIMEDOUT)
+                {
+                    DGDBG("id =%d client tcpi_state!=TCP_ESTABLISHED=%d\n",this_class->id,iErrorCode);
+                    break;
                 } else
                 {
-                    break;
+                    usleep(1000);
                 }
 #else
                 struct tcp_info info;

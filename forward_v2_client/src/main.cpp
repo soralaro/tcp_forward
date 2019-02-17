@@ -10,12 +10,12 @@
 #endif
 #define ListenQueue 200
 
-#define LOCAL_PORT 6000
-#define SERVER_PORT 6000
-#define SERVER_IP "127.0.0.1"
-#define MAX_CONNECT 200
-#define ENCRYP_KEY  0XAA
-#define ENCRYP_KEY_2  0XCC
+#define LOCAL_PORT 7102
+#define SERVER_PORT 7101
+#define SERVER_IP "0.0.0.0"
+#define MAX_CONNECT 300
+#define ENCRYP_KEY  0Xff
+#define ENCRYP_KEY_2  0Xff
 char* getCmdOption(char ** begin, char ** end, const std::string & option)
 {
     char ** itr = std::find(begin, end, option);
@@ -61,7 +61,7 @@ int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::st
     if (des_key_2_c)
         memcpy(des_key_2,des_key_2_c,16);
 
-
+#if 0
     if (argc<2)
     {
         std::cout << "Usage: ./app_name "
@@ -76,6 +76,7 @@ int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::st
                   << std::endl;
         return -1;
     }
+#endif
     return 0;
 }
 int main(int argc, char** argv) {
@@ -101,11 +102,12 @@ int main(int argc, char** argv) {
     int max_connect=MAX_CONNECT;
     unsigned char encryp_key=ENCRYP_KEY;
     unsigned char encryp_key_2=ENCRYP_KEY_2;
-    char *default_des_key = "~!@#$%^&*()_+QWE";
+    char *default_des_key ="qwertyuiopasdfgh";
+    char *default_des_key_2 ="qwertyuiopasdfgh";
     char des_key[17];
     memcpy(des_key,default_des_key,sizeof(des_key));
     char des_key_2[17];
-    memcpy(des_key_2,default_des_key,sizeof(des_key_2));
+    memcpy(des_key_2,default_des_key_2,sizeof(des_key_2));
     cmdParse(argc, argv, local_port, server_port, server_ip, max_connect, encryp_key, encryp_key_2,des_key,des_key_2);
     forward::setKey(encryp_key);
     ThreadPool::pool_init(max_connect+3);
@@ -142,7 +144,7 @@ int main(int argc, char** argv) {
             continue;
         }
 #ifdef _WIN64
-        int timeout=1000;
+        int timeout=6000;
         int ret = setsockopt(conn, SOL_SOCKET, SO_SNDTIMEO,(char *)&timeout, sizeof(timeout));
         if (ret < 0) {
             perror("setsockopt SO_SNDTIMEO");
@@ -180,6 +182,7 @@ int main(int argc, char** argv) {
             id++;
         } else
         {
+            printf("forward conn failed!\n");
             close(conn);
         }
 
