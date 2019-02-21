@@ -1,6 +1,6 @@
 project(GFW)
 cmake_minimum_required(VERSION 3.5)
-OPTION(WINDOWS "Build the project as windows" ON)
+OPTION(WINDOWS "Build the project as windows" OFF)
 #set(PLATFORM android)
 set(PLATFORM X86)
 IF(WINDOWS)

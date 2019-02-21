@@ -7,18 +7,21 @@
 #define BUFFER_SIZE 1024
 
 enum class socket_command
-        {
-              Data =0x1234,
-              connect =0x1235,
-              dst_connetc=0x1236,
-              encrypt=0x1237,
-              heart_beat=0x1238
-        };
+{
+    Data =0x34,
+    connect =0x35,
+    dst_connetc=0x36,
+    encrypt=0x37,
+    heart_beat=0x38,
+    user_expire=0x39
+};
 typedef struct COM_struct
 {
-    unsigned int size;
-    unsigned int sn;
-    unsigned int  com;
+    unsigned short size;
+    unsigned char com;
+    unsigned char res0;
+    unsigned int  sn;
+    unsigned int  user_id;
     unsigned int socket_id;
 }COMMANT;
 enum class MSG_TPY
