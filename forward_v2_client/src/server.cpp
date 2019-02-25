@@ -57,6 +57,7 @@ server::~server() {
 }
 void server::init(std::string ip ,int port) {
 
+    srand((int)time(0));
     get_encrypt_state=false;
     end_=false;
     forward_end=true;
@@ -187,6 +188,7 @@ void  server::server_forward(void *arg) {
             COMMANT commant;
             memcpy(&commant, buf, sizeof(commant));
             commant.sn = this_class->send_sn++;
+            commant.res0 =rand();
             DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ", commant.size, commant.sn, commant.socket_id,
                   commant.com);
             memcpy(buf, &commant, sizeof(commant));
