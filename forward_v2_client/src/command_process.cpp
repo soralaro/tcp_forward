@@ -248,6 +248,13 @@ void command_process::rcv_comm_process(MSG_COM Msg)
             DGDBG("rcv_comm_process,command=connect,socket_id=%d",command.socket_id);
             break;
         }
+        case (unsigned int )socket_command::user_expire:
+        {
+            DGFAT("Your subscriber is expire,please contact aboluo@gmx.com");
+            sleep(5);
+            exit(0);
+            break;
+        }
         case (unsigned int )socket_command::dst_connetc:
         {
             DGDBG("rcv_comm_process,command=dst_connetc,socket_id=%d",command.socket_id);

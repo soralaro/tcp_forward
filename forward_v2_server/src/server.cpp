@@ -142,6 +142,21 @@ void server::init(unsigned int g_id,int socket_int) {
     memcpy(buffer+sizeof(COMMANT),encry_data,BUFFER_SIZE);
     q_client_msg.push(Msg);
 
+#if 0
+    //add a test user expire
+    Msg.type = MSG_TPY::msg_client_rcv;
+    Msg.socket_id=g_id;
+    char *buffer1 = new char[sizeof(COMMANT)];
+    Msg.msg = buffer1;
+    Msg.size=sizeof(COMMANT);
+    COMMANT commant1;
+    commant1.size=sizeof(COMMANT);
+    commant1.com=(unsigned int)socket_command::user_expire;
+    commant1.socket_id=1;
+    memcpy(buffer1,&commant1,sizeof(commant));
+    q_client_msg.push(Msg);
+#endif
+
     client_socket=socket_int;
     commandProcess->server_end=&end_;
     id=g_id;
