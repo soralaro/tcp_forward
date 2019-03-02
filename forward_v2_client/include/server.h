@@ -38,6 +38,7 @@ public:
     void init(std::string ip ,int port);
     ~server();
     void release();
+    static unsigned int user_id;
     static void setKey(unsigned  char input_key);
     static void setKey_2(unsigned  char input_key){encryp_key_2=input_key;};
     static void setDesKey(char *key){memcpy(des_key,key,sizeof(des_key)-1);};

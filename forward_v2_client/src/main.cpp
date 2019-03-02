@@ -11,11 +11,14 @@
 #define ListenQueue 200
 
 #define LOCAL_PORT 7102
-#define SERVER_PORT 7101
-#define SERVER_IP "0.0.0.0"
+#define SERVER_PORT 7000
+#define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 300
 #define ENCRYP_KEY  0Xff
 #define ENCRYP_KEY_2  0Xff
+#define USR_ID      1
+#define DES_KEY     "qwertyuiopasdfgh"
+#define DES_KEY2    "qwertyuiopasdfgh"
 char* getCmdOption(char ** begin, char ** end, const std::string & option)
 {
     char ** itr = std::find(begin, end, option);
@@ -102,8 +105,8 @@ int main(int argc, char** argv) {
     int max_connect=MAX_CONNECT;
     unsigned char encryp_key=ENCRYP_KEY;
     unsigned char encryp_key_2=ENCRYP_KEY_2;
-    char *default_des_key ="qwertyuiopasdfgh";
-    char *default_des_key_2 ="qwertyuiopasdfgh";
+    char *default_des_key =DES_KEY;
+    char *default_des_key_2 =DES_KEY2;
     char des_key[17];
     memcpy(des_key,default_des_key,sizeof(des_key));
     char des_key_2[17];
@@ -113,6 +116,7 @@ int main(int argc, char** argv) {
     ThreadPool::pool_init(max_connect+3);
     forward::forward_pool_int(max_connect);
     server Server;
+    server::user_id=USR_ID;
     Server.setKey(encryp_key);
     Server.setKey_2(encryp_key_2);
     Server.setDesKey(des_key);

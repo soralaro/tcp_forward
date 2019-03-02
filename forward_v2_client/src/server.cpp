@@ -9,6 +9,7 @@
 
 unsigned char server::encryp_key=0x55;
 unsigned char server::encryp_key_2=0xae;
+unsigned int  server::user_id=1;
 char server::des_key[17];
 char server::des_key_2[17];
 void server::setKey(unsigned  char input_key)
@@ -126,6 +127,7 @@ void server::release()
     send_sn=0;
     heart_beat=0;
     DGDBG("id=%d release end !\n",id);
+    printf("id=%d disconnect server!\n",id);
 }
 
 void server::timer_fuc(void *arg)
@@ -189,6 +191,7 @@ void  server::server_forward(void *arg) {
             memcpy(&commant, buf, sizeof(commant));
             commant.sn = this_class->send_sn++;
             commant.res0 =rand();
+            commant.user_id=user_id;
             DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ", commant.size, commant.sn, commant.socket_id,
                   commant.com);
             memcpy(buf, &commant, sizeof(commant));
@@ -289,9 +292,9 @@ int server::send_all(int socket, char *buf,int size)
 
 bool server::server_connect()
 {
-    DGDBG("id=%d server_connect star! \n",id);
+    printf("id=%d server_connect star! \n",id);
     if (connect(server_socket, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
-        // perror("server connect");
+        perror("server connect");
         close(server_socket);
         DGERR("server connect fail ,id=%d",id);
         return false;
@@ -332,7 +335,7 @@ bool server::server_connect()
         DGDBG("id=%d server tv.tv_sec=%ld,tv_usec=%ld \n",id,tv.tv_sec,tv.tv_usec);
 
 #endif
-        DGDBG("id =%d ,server connect suc \n",id);
+        printf("id =%d ,server connect suc \n",id);
         connect_state=true;
         send_sn=0;
         std::unique_lock<std::mutex> mlock(mutex_connect);

@@ -9,10 +9,12 @@
 #define LOCAL_PORT 7000
 #define SERVER_PORT 6000
 #define SERVER_IP "127.0.0.1"
-#define MAX_CONNECT 200
+#define MAX_CONNECT 500
 #define MAX_DEVICE 8
-#define ENCRYP_KEY  0XAA
-#define ENCRYP_KEY_2  0XCC
+#define ENCRYP_KEY  0Xff
+#define ENCRYP_KEY_2  0Xff
+#define DES_KEY     "qwertyuiopasdfgh"
+#define DES_KEY2    "qwertyuiopasdfgh"
 
 char* getCmdOption(char ** begin, char ** end, const std::string & option)
 {
@@ -90,11 +92,12 @@ int main(int argc, char** argv) {
     unsigned char encryp_key=ENCRYP_KEY;
     unsigned char encryp_key_2=ENCRYP_KEY_2;
     int max_device=MAX_DEVICE;
-    char *default_des_key = "~!@#$%^&*()_+QWE";
+    char *default_des_key =DES_KEY;
+    char *default_des_key_2 =DES_KEY2;
     char des_key[17];
     char des_key_2[17];
     memcpy(des_key,default_des_key,sizeof(des_key));
-    memcpy(des_key_2,default_des_key,sizeof(des_key_2));
+    memcpy(des_key_2,default_des_key_2,sizeof(des_key_2));
     cmdParse(argc, argv, local_port, server_port, server_ip, max_connect, encryp_key, encryp_key_2,max_device,des_key,des_key_2);
     forward::setKey(encryp_key);
     ThreadPool::pool_init(max_connect+max_device*3);
