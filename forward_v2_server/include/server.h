@@ -66,6 +66,7 @@ private:
     command_process *commandProcess;
     unsigned int send_sn;
     char heart_beat;
+    int usr_id;
 private:
     std::mutex mutex_client_socket;
     std::condition_variable cond_client_socket;

@@ -26,6 +26,7 @@
 #include "block_queue.h"
 #include "command.h"
 #include "forward.h"
+#include "mysql.h"
 
 class command_process
 {
@@ -44,6 +45,7 @@ public:
     BlockQueue<MSG> *q_client_msg;
     unsigned char *encry_data;
     bool *server_end;
+    int *usr_id;
 private:
     void rcv_comm_process(COMMANT com,MSG Msg);
     void data_encrypt(unsigned char *buf,unsigned int cur, int len);
@@ -55,6 +57,7 @@ private:
     u_char  command_Buf[BUFFER_SIZE+sizeof(COMMANT)+1];
     std::map <unsigned int,forward *> mforward;
     unsigned int max_sn;
+    mySQL mysql;
 };
 
 #endif //GFW_COMMAND_PROCESS_H

@@ -250,7 +250,7 @@ void command_process::rcv_comm_process(MSG_COM Msg)
         }
         case (unsigned int )socket_command::user_expire:
         {
-            DGFAT("Your subscriber is expire,please contact aboluo@gmx.com");
+            printf("Your subscriber is expire,please contact aboluo@gmx.com\n");
             sleep(5);
             exit(0);
             break;

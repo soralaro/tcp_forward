@@ -87,6 +87,7 @@ server::server()
     end_=true;
     free=true;
     id=0;
+    usr_id=-1;
     destroy=false;
     client_socket=0;
     forward_end=true;
@@ -95,6 +96,7 @@ server::server()
     ThreadPool::pool_add_worker(forward, this);
     ThreadPool::pool_add_worker(timer_fuc, this);
     commandProcess=new command_process(&q_client_msg);
+    commandProcess->usr_id=&usr_id;
     encry_data=NULL;
 }
 server::~server()
@@ -126,6 +128,7 @@ void server::init(unsigned int g_id,int socket_int) {
         char *buf = (char *) Msg.msg;
         delete[] buf;
     }
+    usr_id=-1;
     commandProcess->encry_data=encry_data;
 
     MSG Msg;
@@ -199,6 +202,7 @@ void server::release()
     }
     DGDBG("id=%d release end !\n",id);
     id=0;
+    usr_id=-1;
     close(client_socket);
     free=true;
     heart_beat=0;
@@ -320,6 +324,10 @@ void  server::forward(void *arg) {
                 } else {
                     DGDBG("server_forwar send size =%d\n", Msg.size);
                 }
+            }
+            if(Msg.type==MSG_TPY::msg_client_expire)
+            {
+                break;
             }
 
         }

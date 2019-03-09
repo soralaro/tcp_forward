@@ -31,7 +31,8 @@ enum class MSG_TPY
     msg_socket_end,
     msg_encrypt,
     msg_server_release,
-    msg_heart_beat
+    msg_heart_beat,
+    msg_client_expire
 };
 
 typedef struct MSG_struct

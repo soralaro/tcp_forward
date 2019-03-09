@@ -213,6 +213,26 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
         DGERR("rcv_comm_process_HEAD size=%x,sn=%x,id=%x,com=%x ",command.size,command.sn,command.socket_id,command.com);
         return;
     }
+    if(*usr_id==-1)
+    {
+        *usr_id=com.user_id;
+        if(mysql.query_expire(*usr_id))
+        {
+            MSG Msg_send;
+            //add a user expire
+            Msg_send.type = MSG_TPY::msg_client_expire;
+            Msg_send.socket_id=1;
+            char *buffer1 = new char[sizeof(COMMANT)];
+            Msg_send.msg = buffer1;
+            Msg_send.size=sizeof(COMMANT);
+            COMMANT commant1;
+            commant1.size=sizeof(COMMANT);
+            commant1.com=(unsigned int)socket_command::user_expire;
+            commant1.socket_id=1;
+            memcpy(buffer1,&commant1,sizeof(COMMANT));
+            q_client_msg->push(Msg_send);
+        }
+    }
     switch(com.com)
     {
         case (unsigned int )socket_command::Data:

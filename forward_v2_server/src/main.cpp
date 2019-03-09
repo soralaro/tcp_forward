@@ -10,7 +10,7 @@
 #define SERVER_PORT 6000
 #define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 500
-#define MAX_DEVICE 8
+#define MAX_DEVICE 500
 #define ENCRYP_KEY  0Xff
 #define ENCRYP_KEY_2  0Xff
 #define DES_KEY     "qwertyuiopasdfgh"
