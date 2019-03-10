@@ -92,6 +92,7 @@ server::server()
     client_socket=0;
     forward_end=true;
     rcv_end=true;
+    connect_exist_time=0;
     ThreadPool::pool_add_worker(server_rcv, this);
     ThreadPool::pool_add_worker(forward, this);
     ThreadPool::pool_add_worker(timer_fuc, this);
@@ -110,6 +111,7 @@ server::~server()
 }
 void server::init(unsigned int g_id,int socket_int) {
 
+    connect_exist_time=0;
     encry_data=new unsigned char [BUFFER_SIZE];
     srand((int)time(0));
     for(int i=0;i<BUFFER_SIZE;)
@@ -117,7 +119,7 @@ void server::init(unsigned int g_id,int socket_int) {
         encry_data[i]=rand();
         if(encry_data[i]!=0)
         {
-            printf("%x ",encry_data[i]);
+           // printf("%x ",encry_data[i]);
             i++;
         }
     }
@@ -206,6 +208,7 @@ void server::release()
     close(client_socket);
     free=true;
     heart_beat=0;
+    connect_exist_time=0;
 }
 
 void server::timer_fuc(void *arg)
@@ -216,10 +219,22 @@ void server::timer_fuc(void *arg)
         sleep(3);
         if(!this_class->end_) {
             this_class->heart_beat++;
-            if (this_class->heart_beat > 10) {
+            this_class->connect_exist_time++;
+            if(this_class->connect_exist_time>3600*24/3)
+            {
+                MSG msg;
+                msg.type=MSG_TPY::msg_server_release;
+                msg.size=0;
+                msg.msg=NULL;
+                this_class->q_client_msg.push(msg);
+                this_class->connect_exist_time=0;
+            }
+            if (this_class->heart_beat > 10)
+            {
                 this_class->end_= true;
                 this_class->heart_beat=0;
-            } else
+            }
+            else
             {
                 MSG Msg;
                 Msg.socket_id=2;
