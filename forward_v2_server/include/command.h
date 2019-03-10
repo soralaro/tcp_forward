@@ -5,6 +5,7 @@
 #ifndef GFW_COMMAND_H
 #define GFW_COMMAND_H
 #define BUFFER_SIZE 1024
+#define ONE_USER_MAX_DEVICE 5
 
 enum class socket_command
 {
@@ -13,7 +14,8 @@ enum class socket_command
     dst_connetc=0x36,
     encrypt=0x37,
     heart_beat=0x38,
-    user_expire=0x39
+    user_expire=0x39,
+    exceed_max_device=0x3a
 };
 typedef struct COM_struct
 {
@@ -32,7 +34,8 @@ enum class MSG_TPY
     msg_encrypt,
     msg_server_release,
     msg_heart_beat,
-    msg_client_expire
+    msg_client_expire,
+    msg_exit_client
 };
 
 typedef struct MSG_struct

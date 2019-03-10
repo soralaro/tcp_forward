@@ -46,6 +46,7 @@ public:
     unsigned char *encry_data;
     bool *server_end;
     int *usr_id;
+    std::map<unsigned int ,unsigned int> *mapUsr;
 private:
     void rcv_comm_process(COMMANT com,MSG Msg);
     void data_encrypt(unsigned char *buf,unsigned int cur, int len);

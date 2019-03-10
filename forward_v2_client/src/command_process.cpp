@@ -255,6 +255,13 @@ void command_process::rcv_comm_process(MSG_COM Msg)
             exit(0);
             break;
         }
+        case (unsigned int )socket_command::exceed_max_device:
+        {
+            printf("You have exeeded the max device. The number of online device is 5.\n");
+            sleep(5);
+            exit(0);
+            break;
+        }
         case (unsigned int )socket_command::dst_connetc:
         {
             DGDBG("rcv_comm_process,command=dst_connetc,socket_id=%d",command.socket_id);

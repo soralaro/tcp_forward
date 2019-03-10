@@ -14,6 +14,7 @@ unsigned char server::encryp_key_2=0xae;
 char server::des_key[17];
 char server::des_key_2[17];
 std::vector<server *> server::server_Pool;
+std::map<unsigned int ,unsigned int> server::mapUsr;
 void server::setKey(unsigned  char input_key)
 {
     encryp_key=input_key;
@@ -98,6 +99,7 @@ server::server()
     ThreadPool::pool_add_worker(timer_fuc, this);
     commandProcess=new command_process(&q_client_msg);
     commandProcess->usr_id=&usr_id;
+    commandProcess->mapUsr=&mapUsr;
     encry_data=NULL;
 }
 server::~server()
@@ -178,7 +180,6 @@ void server::init(unsigned int g_id,int socket_int) {
 }
 void server::release()
 {
-
     if(!forward_end)
     {
         MSG msg;
@@ -203,6 +204,18 @@ void server::release()
         encry_data=NULL;
     }
     DGDBG("id=%d release end !\n",id);
+    if(usr_id!=-1)
+    {
+        auto iter = mapUsr.find(usr_id);
+        if(iter!=mapUsr.end())
+        {
+            iter->second--;
+            if(iter->second<=0)
+            {
+                mapUsr.erase(iter);
+            }
+        }
+    }
     id=0;
     usr_id=-1;
     close(client_socket);
@@ -213,7 +226,6 @@ void server::release()
 
 void server::timer_fuc(void *arg)
 {
-
     server *this_class = (server *)arg;
     while(!this_class->destroy) {
         sleep(3);
@@ -340,7 +352,7 @@ void  server::forward(void *arg) {
                     DGDBG("server_forwar send size =%d\n", Msg.size);
                 }
             }
-            if(Msg.type==MSG_TPY::msg_client_expire)
+            if(Msg.type==MSG_TPY::msg_client_expire||Msg.type==MSG_TPY::msg_exit_client)
             {
                 break;
             }

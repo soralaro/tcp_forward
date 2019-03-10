@@ -13,7 +13,8 @@ enum class socket_command
     dst_connetc=0x36,
     encrypt=0x37,
     heart_beat=0x38,
-    user_expire=0x39
+    user_expire=0x39,
+    exceed_max_device=0x3a
 };
 typedef struct COM_struct
 {

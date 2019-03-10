@@ -13,7 +13,7 @@
 #define LOCAL_PORT 7102
 #define SERVER_PORT 7000
 #define SERVER_IP "127.0.0.1"
-#define MAX_CONNECT 300
+#define MAX_CONNECT 500
 #define ENCRYP_KEY  0Xff
 #define ENCRYP_KEY_2  0Xff
 #define USR_ID      1

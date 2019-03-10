@@ -232,6 +232,34 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
             memcpy(buffer1,&commant1,sizeof(COMMANT));
             q_client_msg->push(Msg_send);
         }
+        else
+        {
+            auto iter = mapUsr->find(*usr_id);
+            if(iter != mapUsr->end())
+            {
+                iter->second++;
+                if(iter->second>ONE_USER_MAX_DEVICE)
+                {
+                    MSG Msg_send;
+                    //add a user expire
+                    Msg_send.type = MSG_TPY::msg_exit_client;
+                    Msg_send.socket_id=1;
+                    char *buffer1 = new char[sizeof(COMMANT)];
+                    Msg_send.msg = buffer1;
+                    Msg_send.size=sizeof(COMMANT);
+                    COMMANT commant1;
+                    commant1.size=sizeof(COMMANT);
+                    commant1.com=(unsigned int)socket_command::exceed_max_device;
+                    commant1.socket_id=1;
+                    memcpy(buffer1,&commant1,sizeof(COMMANT));
+                    q_client_msg->push(Msg_send);
+                }
+            }
+            else
+            {
+                mapUsr->insert(std::pair<unsigned int ,unsigned int >(*usr_id,1));
+            }
+        }
     }
     switch(com.com)
     {
