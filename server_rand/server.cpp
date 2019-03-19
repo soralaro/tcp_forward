@@ -11,9 +11,10 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <sys/shm.h>
+#include <signal.h>
 #include <thread>
 #include <iostream>
-#define PORT 7101
+#define PORT 8101
 #define QUEUE 20
 #define STOP_SSR  0x11
 #define STAR_SSR  0x22
@@ -36,6 +37,7 @@ void commandPro(unsigned char command)
     }
 }
 int main() {
+    signal(SIGPIPE, SIG_IGN);
     int ss = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in server_sockaddr;
     server_sockaddr.sin_family = AF_INET;

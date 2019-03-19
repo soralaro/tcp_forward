@@ -16,7 +16,8 @@
 #include <string>
 #include <algorithm>
 #include <iostream>
-#define MYPORT  7101
+#include <signal.h>
+#define MYPORT  8101
 #define BUFFER_SIZE 1024
 
 #define STOP_SSR  0x11
@@ -66,10 +67,11 @@ int cmdParse(int argc, char * argv[], unsigned char &toDo)
 }
 int main(int argc, char** argv)
 {
+    signal(SIGPIPE, SIG_IGN);
     unsigned char toDo=0;
     cmdParse(argc, argv, toDo);
     ///定义sockfd
-    int sock_cli = socket(AF_INET,SOCK_STREAM, 0);
+    int sock_cli;
 
     ///定义sockaddr_in
     struct sockaddr_in servaddr;
@@ -78,6 +80,7 @@ int main(int argc, char** argv)
     servaddr.sin_port = htons(MYPORT);  ///服务器端口
     servaddr.sin_addr.s_addr = inet_addr("45.78.1.226");  ///服务器ip
     while(1) {
+        sock_cli = socket(AF_INET,SOCK_STREAM, 0);
         //连接服务器，成功返回0，错误返回-1
         if (connect(sock_cli, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
             perror("connect");
@@ -104,6 +107,10 @@ int main(int argc, char** argv)
             unsigned char buffer[1024*1024];
             toDo = rand();
             int ret = send(sock_cli, &toDo, sizeof(toDo), 0);
+            if(ret<=0)
+            {
+                break;
+            }
             printf("send comand ret=%d\n", ret);
             int len = recv(sock_cli, buffer, sizeof(buffer), 0);
             if (len > 0) {
