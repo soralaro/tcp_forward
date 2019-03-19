@@ -56,12 +56,18 @@ int mySQL::query_expire(int usr_id)
             MYSQL_FIELD *fields;
             num_fields = mysql_num_fields(res);
             fields = mysql_fetch_fields(res);
-            for (int i = 0; i < num_fields; i++)
-            {
-                printf("Field %u is %s\n", i, fields[i].name);
-            }
+            // for (int i = 0; i < num_fields; i++)
+            // {
+            //     printf("Field %u is %s\n", i, fields[i].name);
+            // }
             MYSQL_ROW column;   //数据行的列
             column = mysql_fetch_row(res);
+            if(column==nullptr)
+            {
+                mysql_free_result(res);
+                mysql_close(conn);
+                return 1;
+            }
             //printf("usr_id=%s,usr_name=%s,psw=%s,forbid=%s,start_date=%s,end_date=%s \n",column[0],column[1],column[2],column[3],column[4],column[5]);
             int forbid=atoi(column[(int)(tbl_field::forbid)]);
             if(forbid==1)
@@ -96,7 +102,8 @@ int mySQL::query_expire(int usr_id)
             mysql_free_result(res);
             mysql_close(conn);
             return expire;
-
         }
     }
+    mysql_close(conn);
+    return 1;
 }

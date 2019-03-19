@@ -30,7 +30,7 @@ class server
 {
 public:
     server();
-    void init(unsigned int g_id,int socket_int);
+    void init(unsigned int g_id,int socket_int,struct sockaddr_in addr);
     ~server();
     void release();
     static void setKey(unsigned  char input_key);
@@ -40,6 +40,7 @@ public:
     static void server_pool_int(int max_num);
     static void server_pool_destroy();
     static server * server_pool_get();
+    struct sockaddr_in client_addr;
     int id;
     bool free;
     bool destroy;

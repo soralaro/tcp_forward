@@ -82,6 +82,31 @@ void command_process::relase()
     max_sn=0;
 }
 
+void command_process::log(int login_out)
+{
+    time_t now = time(0);// 基于当前系统的当前日期/时间
+    tm *tm_now = localtime(&now);
+ 
+    char date_c[32];
+    memset(date_c,0,sizeof(date_c));
+    strftime(date_c, sizeof(date_c), "%Y-%m-%d", tm_now);
+    std::string file_name;
+    file_name="./log/";
+    file_name=file_name+date_c+".txt";
+    FILE *flog = fopen( file_name.c_str(), "a+" );
+    if(flog!=NULL)
+    {
+        char strTime[32];
+        strftime(strTime, sizeof(strTime), "%Y-%m-%d %H:%M:%S", tm_now);
+        if(login_out==1)
+            fprintf(flog, "%s %s id=%d login\n", strTime,inet_ntoa(client_addr->sin_addr),*usr_id);
+        else
+            fprintf(flog, "%s %s id=%d logout\n", strTime,inet_ntoa(client_addr->sin_addr),*usr_id);
+        fclose(flog);
+    }
+}
+
+
 void command_process::process(unsigned char *data_in, unsigned int len) {
 
     unsigned char *buf=data_in;
@@ -274,6 +299,7 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
                 mapUsr->insert(std::pair<unsigned int ,unsigned int >(*usr_id,1));
             }
         }
+        log(1);
     }
     switch(com.com)
     {

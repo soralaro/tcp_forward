@@ -160,7 +160,7 @@ int main(int argc, char** argv) {
             static unsigned  int id=0;
             Server->setKey(encryp_key);
             Server->setKey_2(encryp_key_2);
-            Server->init(id++,conn);
+            Server->init(id++,conn,client_addr);
             printf("new connect id=%d \n",Server->id);
         } else
         {

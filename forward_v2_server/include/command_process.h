@@ -43,15 +43,16 @@ public:
     void relase();
     void erease_mforward(unsigned int socket_id);
     bool check_mforward_exist(unsigned int socketid);
+    void log(int login_out);
     BlockQueue<MSG> *q_client_msg;
     unsigned char *encry_data;
     bool *server_end;
     int *usr_id;
+    struct sockaddr_in *client_addr;
     std::map<unsigned int ,unsigned int> *mapUsr;
 private:
     void rcv_comm_process(COMMANT com,MSG Msg);
     void data_encrypt(unsigned char *buf,unsigned int cur, int len);
-
     COMMANT command;
     int commant_cur;
     unsigned int current_max_socket_id;

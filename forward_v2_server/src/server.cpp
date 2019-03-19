@@ -111,7 +111,7 @@ server::~server()
         encry_data=NULL;
     }
 }
-void server::init(unsigned int g_id,int socket_int) {
+void server::init(unsigned int g_id,int socket_int,struct sockaddr_in addr) {
 
     connect_exist_time=0;
     encry_data=new unsigned char [BUFFER_SIZE];
@@ -149,23 +149,11 @@ void server::init(unsigned int g_id,int socket_int) {
     memcpy(buffer+sizeof(COMMANT),encry_data,BUFFER_SIZE);
     q_client_msg.push(Msg);
 
-#if 0
-    //add a test user expire
-    Msg.type = MSG_TPY::msg_client_rcv;
-    Msg.socket_id=g_id;
-    char *buffer1 = new char[sizeof(COMMANT)];
-    Msg.msg = buffer1;
-    Msg.size=sizeof(COMMANT);
-    COMMANT commant1;
-    commant1.size=sizeof(COMMANT);
-    commant1.com=(unsigned int)socket_command::user_expire;
-    commant1.socket_id=1;
-    memcpy(buffer1,&commant1,sizeof(commant));
-    q_client_msg.push(Msg);
-#endif
 
     client_socket=socket_int;
+    client_addr=addr;
     commandProcess->server_end=&end_;
+    commandProcess->client_addr=&client_addr;
     id=g_id;
     end_=false;
     send_sn=0;
@@ -297,6 +285,7 @@ void server::server_rcv(void *arg) {
             }
         }
         this_class->rcv_end=true;
+        this_class->commandProcess->log(0);
         this_class->release();
     }
     DGDBG("id =%d server_rcv exit \n",this_class->id);
