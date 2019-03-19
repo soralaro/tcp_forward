@@ -316,11 +316,30 @@ void  server::forward(void *arg) {
             this_class->q_client_msg.pop(Msg);
             if(Msg.type==MSG_TPY::msg_server_release)
             {
+                if(Msg.size>0)
+                {
+                    char *buf=(char *)Msg.msg;
+                    delete[] buf;
+                }
                 break;
             }
             if(Msg.type==MSG_TPY::msg_socket_end)
             {
                 this_class->commandProcess->erease_mforward(Msg.socket_id);
+            }
+
+            if(Msg.type==MSG_TPY::msg_client_rcv)
+            {
+                if(!this_class->commandProcess->check_mforward_exist(Msg.socket_id))
+                {
+                    if(Msg.size>0)
+                    {
+                        char *buf=(char *)Msg.msg;
+                        delete[] buf;
+                    }
+                    DGDBG("socket_id=%d,has not existed! ",Msg.socket_id);
+                    continue;
+                }
             }
 
             if(Msg.size>0) {

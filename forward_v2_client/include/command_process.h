@@ -44,6 +44,7 @@ public:
     ~command_process();
    void  process(unsigned char *data_in, unsigned int len);
    void  erease_mforward(unsigned int sockeid);
+   bool check_mforward_exist(unsigned int socketid);
    void  add_mforward(forward * Forward);
    void relase();
    bool *get_encrypt_state;

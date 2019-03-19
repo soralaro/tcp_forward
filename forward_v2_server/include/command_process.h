@@ -42,6 +42,7 @@ public:
     void process(unsigned char *data_in, unsigned int len);
     void relase();
     void erease_mforward(unsigned int socket_id);
+    bool check_mforward_exist(unsigned int socketid);
     BlockQueue<MSG> *q_client_msg;
     unsigned char *encry_data;
     bool *server_end;

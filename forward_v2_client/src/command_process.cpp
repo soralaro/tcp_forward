@@ -57,6 +57,19 @@ void command_process::encrypt_code_resolv()
     encry_data[encryp_key_2]=a^encryp_key;
 }
 
+bool command_process::check_mforward_exist(unsigned int socketid)
+{
+    auto iter=mforward.find(socketid);
+    if(iter!=mforward.end())
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 void command_process::erease_mforward(unsigned int socketid) {
     auto iter=mforward.find(socketid);
     if(iter!=mforward.end())

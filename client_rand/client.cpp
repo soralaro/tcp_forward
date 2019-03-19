@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <iostream>
 #include <signal.h>
+#include <semaphore.h>
+#include <netinet/tcp.h>
 #define MYPORT  8101
 #define BUFFER_SIZE 1024
 
@@ -107,11 +109,12 @@ int main(int argc, char** argv)
             unsigned char buffer[1024*1024];
             toDo = rand();
             int ret = send(sock_cli, &toDo, sizeof(toDo), 0);
+            printf("send comand ret=%d\n", ret);
             if(ret<=0)
             {
                 break;
             }
-            printf("send comand ret=%d\n", ret);
+
             int len = recv(sock_cli, buffer, sizeof(buffer), 0);
             if (len > 0) {
                 printf("recv len %d %d\n", len,buffer[len-1]);
@@ -120,7 +123,16 @@ int main(int argc, char** argv)
                 printf("recv time out\n");
             } else {
                 printf("recv erro \n");
-                break;
+                struct tcp_info info;
+
+                int info_len=sizeof(info);
+
+                getsockopt(sock_cli, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
+                if(info.tcpi_state!=TCP_ESTABLISHED)
+                {
+                    printf(" tcpi_state!=TCP_ESTABLISHED) \n");
+                    break;
+                }
             }
 
         }

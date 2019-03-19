@@ -18,6 +18,20 @@ void command_process::data_encrypt(unsigned char *buf, unsigned int cur,int len)
     }
 
 }
+
+bool command_process::check_mforward_exist(unsigned int socketid)
+{
+    auto iter=mforward.find(socketid);
+    if(iter!=mforward.end())
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 void command_process::erease_mforward(unsigned int socket_id) {
     auto iter=mforward.find(socket_id);
     if(iter!=mforward.end())
