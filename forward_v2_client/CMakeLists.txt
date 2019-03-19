@@ -6,7 +6,7 @@ file(GLOB_RECURSE cpp_files "*.cpp")
 file(GLOB_RECURSE c_files "*.c")
 add_executable(${TARGET_NAME} ${cpp_files} ${c_files})
 IF(WINDOWS)
-target_link_libraries(${TARGET_NAME} -lws2_32)
+target_link_libraries(${TARGET_NAME} -lws2_32 -static-libgcc -static-libstdc++)
 endif(WINDOWS)
 
 
