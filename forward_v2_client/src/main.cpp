@@ -16,7 +16,7 @@
 #define MAX_CONNECT 500
 #define ENCRYP_KEY  0Xff
 #define ENCRYP_KEY_2  0Xff
-#define USR_ID      2
+#define USR_ID      1
 #define DES_KEY     "qwertyuiopasdfgh"
 #define DES_KEY2    "qwertyuiopasdfgh"
 char* getCmdOption(char ** begin, char ** end, const std::string & option)
