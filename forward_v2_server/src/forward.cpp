@@ -191,6 +191,21 @@ int forward::send_all(MSG Msg)
         } else
         {
             //close(client_socket);
+            if(q_client_msg!=NULL) 
+            {
+                MSG Msg;
+                Msg.type = MSG_TPY::msg_socket_end;
+                char *buffer = new char[BUFFER_SIZE];
+                Msg.socket_id = id;
+                Msg.msg = buffer;
+                Msg.size = sizeof(COMMANT);
+                COMMANT commant;
+                commant.size = sizeof(COMMANT);
+                commant.com = (unsigned int) socket_command::dst_connetc;
+                commant.socket_id = id;
+                memcpy(buffer, &commant, sizeof(commant));
+                q_client_msg->push(Msg);
+            }
             end_=true;
             return -1;
         }

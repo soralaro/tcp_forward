@@ -88,7 +88,6 @@ bool server::add_forward(unsigned int g_id, int socket_int) {
     }
     forward *forward = forward::forward_pool_get();
     if(forward!=NULL) {
-        static unsigned  int id=0;
         forward->init(g_id,socket_int,&q_client_msg);
         commandProcess->add_mforward(forward);
         //printf("new connect id=%d \n",forward->id);
