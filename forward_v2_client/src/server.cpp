@@ -319,7 +319,7 @@ bool server::server_connect()
     }
     else {
 #ifdef _WIN64
-        int timeout = 6000;//3s
+        int timeout = 12000;//3s
         int ret = setsockopt(server_socket, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
         if (ret < 0) {
             perror("setsockopt SO_SNDTIMEO");
