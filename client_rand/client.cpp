@@ -19,6 +19,52 @@
 #include <signal.h>
 #include <semaphore.h>
 #include <netinet/tcp.h>
+#include <sys/time.h>
+
+
+class MyTime
+{
+private:
+    struct timeval _t;
+
+public:
+    MyTime()
+    {
+        init();
+    }
+
+    inline void init()
+    {
+        gettimeofday(&_t, NULL);
+    }
+
+    inline double now(const char *key = NULL)
+    {
+        struct timeval _n;
+        gettimeofday(&_n, NULL);
+        double duration = (1000000 * (_n.tv_sec - _t.tv_sec) + _n.tv_usec - _t.tv_usec) / 1000.0;
+
+        if(key)
+        {
+            printf("%s time cost is: %f ms\n", key, duration);
+        }
+
+        return duration;
+    }
+
+    inline double reset(const char *key = NULL)
+    {
+        double duration = now();
+        init();
+
+        if(key)
+        {
+            printf("%s time cost is: %f ms\n", key, duration);
+        }
+
+        return duration;
+    }
+};
 #define MYPORT  8101
 #define BUFFER_SIZE 1024
 
@@ -74,7 +120,7 @@ int main(int argc, char** argv)
     cmdParse(argc, argv, toDo);
     ///定义sockfd
     int sock_cli;
-
+    MyTime my_time;
     ///定义sockaddr_in
     struct sockaddr_in servaddr;
     memset(&servaddr, 0, sizeof(servaddr));
@@ -104,20 +150,27 @@ int main(int argc, char** argv)
             exit(1);
         }
         printf("connect sucess!\n");
-
+        unsigned int recv_total=0;
         while (1) {
             unsigned char buffer[1024*1024];
             toDo = rand();
             int ret = send(sock_cli, &toDo, sizeof(toDo), 0);
-            printf("send comand ret=%d\n", ret);
+            //printf("send comand ret=%d\n", ret);
             if(ret<=0)
             {
                 break;
             }
-
+            
             int len = recv(sock_cli, buffer, sizeof(buffer), 0);
             if (len > 0) {
-                printf("recv len %d %d\n", len,buffer[len-1]);
+                //printf("recv len %d %d\n", len,buffer[len-1]);
+                recv_total+=len;
+                if(recv_total>1000000)
+                {
+                    double duration=my_time.reset();
+                    printf("speed=%f \n",recv_total/duration*1000);
+                    recv_total=0;
+                }
 
             } else if (len == 0) {
                 printf("recv time out\n");
@@ -140,3 +193,6 @@ int main(int argc, char** argv)
     }
     return 0;
 }
+
+
+
