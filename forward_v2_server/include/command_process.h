@@ -26,8 +26,11 @@
 #include "block_queue.h"
 #include "command.h"
 #include "forward.h"
+#ifdef USEMSQL
 #include "mysql.h"
-
+#else 
+#include "mySqlite3.h"
+#endif
 class command_process
 {
     typedef enum {
@@ -60,7 +63,8 @@ private:
     u_char  command_Buf[BUFFER_SIZE+sizeof(COMMANT)+1];
     std::map <unsigned int,forward *> mforward;
     unsigned int max_sn;
-    mySQL mysql;
+   // mySQL mysql;
+    mySqlite3 mysql;
 };
 
 #endif //GFW_COMMAND_PROCESS_H

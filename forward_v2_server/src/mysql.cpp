@@ -1,7 +1,7 @@
 //
 // Created by deepglint on 19-3-8.
 //
-
+#ifdef USEMSQL
 #include "mysql.h"
 enum class tbl_field
 {
@@ -107,3 +107,4 @@ int mySQL::query_expire(int usr_id)
     mysql_close(conn);
     return 1;
 }
+#endif

@@ -42,13 +42,82 @@ int mySqlite3::connect()
     }
 }
 
+static int mySqlite3::callback(void *data, int argc, char **argv, char **azColName)
+{
+    int i;
+    mySqlite3 *mysql=(mySqlite3 *)data;
+    // for(i=0; i<argc; i++)
+    // {
+    //   printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+    // }
+    if(argc>6)
+    {
+        int forbid=atoi(argv[(int)(tbl_field::forbid)]);
+        //printf("forbid=%d\n",forbid);
+        if(forbid==1)
+        {
+            mysql->expire=1;
+        }
+        else
+        {
+            struct tm expire_time;
+            strptime((const char*)(argv[(int)(tbl_field::end_date)]), "%Y-%m-%d", &expire_time);
+            //strptime("2001-02-12", "%Y-%m-%d",  &expire_time);
+            time_t now = time(0);// 基于当前系统的当前日期/时间
+            tm *tm_now = localtime(&now);
+            //printf("tm_year=%d,tm_mon=%d ,tm_yday=%d\n",expire_time.tm_year,expire_time.tm_mon,expire_time.tm_yday);
+            if(tm_now->tm_year > expire_time.tm_year)
+            {
+                mysql->expire=1;
+            }
+            else if(tm_now->tm_year == expire_time.tm_year)
+            {
+                if (tm_now->tm_mon > expire_time.tm_mon)
+                {
+                    mysql->expire = 1;
+                }
+                else if(tm_now->tm_mon == expire_time.tm_mon)
+                {
+                    if (tm_now->tm_yday > expire_time.tm_yday)
+                    {
+                        mysql->expire = 1;
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        mysql->expire=1;
+    }
+
+   return 0;
+}
+
 int mySqlite3::query_expire(int usr_id)
 {
     int ret;
+    char *zErrMsg = 0;
     std::string sql;
-    sql="select * from usr_tale  where usr_id=";
+    int rc;
+
+    sql="select * from usr_table  where usr_id=";
     sql+=std::to_string(usr_id);
+
     connect();
 
-    return 1;
+    /* Execute SQL statement */
+    expire=0;
+    rc = sqlite3_exec(conn, sql.c_str(), mySqlite3::callback, (void*)this, &zErrMsg);
+
+    if( rc != SQLITE_OK ){
+      fprintf(stderr, "SQL error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+   }
+   else
+   {
+      //fprintf(stdout, "Operation done successfully\n");
+   }
+   sqlite3_close(conn);
+   return expire;
 }

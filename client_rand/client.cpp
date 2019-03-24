@@ -155,7 +155,7 @@ int main(int argc, char** argv)
             unsigned char buffer[1024*1024];
             toDo = rand();
             int ret = send(sock_cli, &toDo, sizeof(toDo), 0);
-            //printf("send comand ret=%d\n", ret);
+           // printf("send comand ret=%d\n", ret);
             if(ret<=0)
             {
                 break;
@@ -163,7 +163,7 @@ int main(int argc, char** argv)
             
             int len = recv(sock_cli, buffer, sizeof(buffer), 0);
             if (len > 0) {
-                //printf("recv len %d %d\n", len,buffer[len-1]);
+               // printf("recv len %d %d\n", len,buffer[len-1]);
                 recv_total+=len;
                 if(recv_total>1000000)
                 {
