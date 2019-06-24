@@ -29,7 +29,7 @@ char* getCmdOption(char ** begin, char ** end, const std::string & option)
     return 0;
 }
 
-int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::string& server_ip,int& max_connect,unsigned char& encryp_key,unsigned char& encryp_key_2,char *des_key,char *des_key_2)
+int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::string& local_ip,std::string& server_ip,int& max_connect,unsigned char& encryp_key,unsigned char& encryp_key_2,char *des_key,char *des_key_2)
 {
     char *stop_str;
     char * local_port_c = getCmdOption(argv, argv + argc, "-l");
@@ -43,6 +43,11 @@ int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::st
     char * server_ip_c = getCmdOption(argv, argv + argc, "-i");
     if (server_ip_c)
         server_ip = std::string(server_ip_c);
+
+    char * local_ip_c = getCmdOption(argv, argv + argc, "-a");
+    if (local_ip_c)
+        local_ip = std::string(local_ip_c);
+
 
     char * max_connect_c = getCmdOption(argv, argv + argc, "-n");
     if (max_connect_c)
@@ -102,6 +107,7 @@ int main(int argc, char** argv) {
     int local_port=LOCAL_PORT;
     int server_port=SERVER_PORT;
     std::string server_ip=SERVER_IP;
+    std::string local_ip;
     int max_connect=MAX_CONNECT;
     unsigned char encryp_key=ENCRYP_KEY;
     unsigned char encryp_key_2=ENCRYP_KEY_2;
@@ -111,7 +117,7 @@ int main(int argc, char** argv) {
     memcpy(des_key,default_des_key,sizeof(des_key));
     char des_key_2[17];
     memcpy(des_key_2,default_des_key_2,sizeof(des_key_2));
-    cmdParse(argc, argv, local_port, server_port, server_ip, max_connect, encryp_key, encryp_key_2,des_key,des_key_2);
+    cmdParse(argc, argv, local_port, server_port,local_ip, server_ip, max_connect, encryp_key, encryp_key_2,des_key,des_key_2);
     forward::setKey(encryp_key);
     ThreadPool::pool_init(max_connect+3);
     forward::forward_pool_int(max_connect);
@@ -128,7 +134,11 @@ int main(int argc, char** argv) {
     struct sockaddr_in local_sockaddr;
     local_sockaddr.sin_family = AF_INET;
     local_sockaddr.sin_port = htons(local_port);
-    local_sockaddr.sin_addr.s_addr =htonl(INADDR_ANY);//inet_addr("127.0.0.1");//htonl(INADDR_ANY);
+    if(local_ip.empty()) {
+        local_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");//htonl(INADDR_ANY);
+    }
+    else
+        local_sockaddr.sin_addr.s_addr =inet_addr(local_ip.c_str());//htonl(INADDR_ANY);
     if(bind(ss, (struct sockaddr* ) &local_sockaddr, sizeof(local_sockaddr))==-1) {
         perror("bind");
         exit(1);
