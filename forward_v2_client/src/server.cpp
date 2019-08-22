@@ -213,8 +213,8 @@ void  server::server_forward(void *arg) {
                   commant.com);
             memcpy(buf, &commant, sizeof(commant));
             this_class->data_encrypt((unsigned char *) buf, Msg.size);
-            des_encrypt(buf,sizeof(commant));
-            des_encrypt_2(buf+sizeof(commant),ALIGN_16(Msg.size-sizeof(commant)));
+            des_encrypt((unsigned char *)buf,sizeof(commant));
+            des_encrypt_2((unsigned char *)buf+sizeof(commant),ALIGN_16(Msg.size-sizeof(commant)));
             int ret = send_all(this_class->server_socket, buf, ALIGN_16(Msg.size));
 
             delete[] buf;

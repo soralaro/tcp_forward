@@ -11,9 +11,15 @@ add_definitions("-D_AMD64_")
 add_compile_options(-std=c++11)
 endif(WINDOWS)
 
+
+
 if (PLATFORM STREQUAL "android")
-    set(ANDROID_NDK,"/czx/application/android-ndk-r19")
-    set(CMAKE_TOOLCHAIN_FILE ${ANDROID_NDK}/build/cmake/android.toolchain.cmake)
+    set(ANDROID_NDK /czx/application/android-ndk-r19)
+    set(CMAKE_TOOLCHAIN_FILE $ANDROID_NDK/build/cmake/android.toolchain.cmake)
+   # cmake -DCMAKE_TOOLCHAIN_FILE=/czx/application/android-ndk-r19/build/cmake/android.toolchain.cmake -DANDROID_ABI="armeabi-v7a" -DANDROID_ARM_NEON=ON -DANDROID_PLATFORM=android-14 ..
+    set(ANDROID_ABI "armeabi-v7a")
+    set(ANDROID_ARM_NEON ON)
+    set(ANDROID_PLATFORM android-14)
 elseif (PLATFORM STREQUAL "X86")
     set(CMAKE_C_COMPILER gcc)
     set(CMAKE_CXX_COMPILER g++)

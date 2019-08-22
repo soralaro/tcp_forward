@@ -26,15 +26,15 @@ static void desfunc(unsigned long *, unsigned long *);
 static void cookey(unsigned long *);
 
 static void deskey(unsigned char *key, short edf);
-static void cpkey(into);
-static void usekey(from);
-static void des(inblock, outblock);
-static void Ddes(from, into);
-static void makekey(aptr, kptr);
-static void make2key(aptr, kptr);
-static void cp2key(into);
-static void use2key(from);
 
+static void cpkey(register unsigned long *into);
+static void usekey(register unsigned long *from);
+static void des(unsigned char *inblock,unsigned char *outblock);
+static void Ddes(unsigned char *from,unsigned char *into);
+static void makekey(register char * aptr, register unsigned char * kptr);
+static void make2key(register char *aptr,register unsigned char *kptr);
+static void cp2key(register unsigned long *into);
+static void use2key(register unsigned long *from);
 
 
 static unsigned long KnL[32] = { 0L };
