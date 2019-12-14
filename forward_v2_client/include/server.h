@@ -30,7 +30,11 @@
 #include "block_queue.h"
 #include "command.h"
 #include "../include/command_process.h"
-
+#define  DISCONNECT 0
+#define  CONNECTED  1
+#define  CONNECTING 2
+#define  CONNECT_WAIT 3
+#define  IDEL_TIME_MAX   10
 class server
 {
 public:
@@ -54,10 +58,16 @@ private:
     bool server_connect();
     static int send_all(int socket, char *buf,int size);
     static void timer_fuc(void *arg);
+    void heart_beat_set(int value);
+    int heart_beat_get();
+    void idel_time_set(int value);
+    int idel_time_get();
+
     int server_socket;
     struct sockaddr_in servaddr;
 private:
-    bool connect_state;
+    std::mutex connect_lock;
+    int connect_state;
     bool get_encrypt_state;
     bool end_;
     bool forward_end;
@@ -68,10 +78,15 @@ private:
     unsigned char encry_data[BUFFER_SIZE];
     command_process *commandProcess;
     unsigned int send_sn;
-    char heart_beat;
+    std::mutex heart_beat_mutex;
+    int heart_beat;
+    std::mutex idel_time_mutex;
+    int idel_time;
 private:
     std::mutex mutex_connect;
     std::condition_variable cond_connect;
+    std::mutex mutex_notic_connect;
+    std::condition_variable cond_notic_connect;
 };
 
 

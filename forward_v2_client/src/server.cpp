@@ -45,16 +45,52 @@ server::server()
     forward_end=true;
     get_encrypt_state=false;
     id=0;
-    connect_state=false;
+    connect_lock.lock();
+    connect_state=DISCONNECT;
+    connect_lock.unlock();
     server_socket=0;
     memset(&servaddr,0,sizeof(servaddr));
     commandProcess=new command_process(&q_client_msg);
     commandProcess->encry_data=encry_data;
     commandProcess->get_encrypt_state=&get_encrypt_state;
+    idel_time_set(0);
 }
 server::~server() {
     delete commandProcess;
 
+}
+void server::heart_beat_set(int value)
+{
+    heart_beat_mutex.lock();
+    if(value==0)
+        heart_beat=0;
+    else
+        heart_beat+=value;
+    heart_beat_mutex.unlock();
+}
+int server::heart_beat_get()
+{
+    int value;
+    heart_beat_mutex.lock();
+    value=heart_beat;
+    heart_beat_mutex.unlock();
+    return value;
+}
+void server::idel_time_set(int value){
+    idel_time_mutex.lock();
+    if(value==0)
+        idel_time=0;
+    else
+        idel_time+=value;
+    idel_time_mutex.unlock();
+}
+int server::idel_time_get()
+{
+    int value;
+    idel_time_mutex.lock();
+    value=idel_time;
+    idel_time_mutex.unlock();
+    return value;
 }
 void server::init(std::string ip ,int port) {
 
@@ -62,12 +98,15 @@ void server::init(std::string ip ,int port) {
     get_encrypt_state=false;
     end_=false;
     forward_end=true;
-    connect_state=false;
+    connect_lock.lock();
+    connect_state=DISCONNECT;
+    connect_lock.unlock();
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(port);  ///服务器端口
     servaddr.sin_addr.s_addr = inet_addr(ip.c_str());  ///服务器ip
     server_socket = socket(AF_INET,SOCK_STREAM, 0);
-    heart_beat=0;
+    heart_beat_set(0);
+    idel_time_set(0);
     commandProcess->encryp_key_2=encryp_key_2;
     commandProcess->encryp_key=encryp_key;
     des_encrypt_init(des_key);
@@ -78,9 +117,22 @@ void server::init(std::string ip ,int port) {
 
 }
 bool server::add_forward(unsigned int g_id, int socket_int) {
-    if(!connect_state)
+    idel_time_set(0);
+    connect_lock.lock();
+    if(connect_state!=CONNECTED)
     {
+        if(connect_state==CONNECT_WAIT) {
+            connect_lock.unlock();
+            std::unique_lock<std::mutex> mlock(mutex_notic_connect);
+            mlock.unlock();
+            cond_notic_connect.notify_all();
+        } else
+        {
+            connect_lock.unlock();
+        }
         return false;
+    } else {
+        connect_lock.unlock();
     }
     if(!get_encrypt_state)
     {
@@ -90,7 +142,6 @@ bool server::add_forward(unsigned int g_id, int socket_int) {
     if(forward!=NULL) {
         forward->init(g_id,socket_int,&q_client_msg);
         commandProcess->add_mforward(forward);
-        //printf("new connect id=%d \n",forward->id);
     } else
     {
         printf("forward_pool_get false! \n");
@@ -124,7 +175,7 @@ void server::release()
     close(server_socket);
     server_socket = socket(AF_INET,SOCK_STREAM, 0);
     send_sn=0;
-    heart_beat=0;
+    heart_beat_set(0);
     DGDBG("id=%d release end !\n",id);
     printf("id=%d disconnect server!\n",id);
 }
@@ -135,13 +186,24 @@ void server::timer_fuc(void *arg)
     server *this_class = (server *)arg;
     while(!this_class->end_) {
         sleep(3);
-        if(this_class->connect_state) {
-            this_class->heart_beat++;
-            if (this_class->heart_beat > 10) {
-                this_class->connect_state = false;
-                this_class->heart_beat=0;
+        int tmp=this_class->commandProcess->get_mforward_size();
+        if(this_class->commandProcess->get_mforward_size()>0)
+        {
+            this_class->idel_time_set(0);
+        } else {
+            this_class->idel_time_set(1);
+        }
+        this_class->heart_beat_set(1);
+        this_class->connect_lock.lock();
+        if(this_class->connect_state==CONNECTED) {
+            this_class->connect_lock.unlock();
+            if (this_class->heart_beat_get()> 10) {
+                this_class->connect_lock.lock();
+                this_class->connect_state = DISCONNECT;
+                this_class->connect_lock.unlock();
+                this_class->heart_beat_set(0);
                 DGERR("heart_beat time out!");
-            } else
+            } else if(this_class->idel_time_get()<IDEL_TIME_MAX)
             {
                 MSG_COM Msg;
                 Msg.socket_id=2;
@@ -156,6 +218,8 @@ void server::timer_fuc(void *arg)
                 Msg.msg=buf;
                 this_class->q_client_msg.push(Msg);
             }
+        } else {
+            this_class->connect_lock.unlock();
         }
     }
 }
@@ -167,11 +231,15 @@ void  server::server_forward(void *arg) {
     std::unique_lock<std::mutex> mlock(this_class->mutex_connect);
     DGDBG("id =%d server_forward start \n",this_class->id);
     while (!this_class->end_) {
-        while(!this_class->connect_state)
+        this_class->connect_lock.lock();
+        while(this_class->connect_state!=CONNECTED)
         {
+            this_class->connect_lock.unlock();
             this_class->forward_end=true;
             this_class->cond_connect.wait(mlock);
+            this_class->connect_lock.lock();
         }
+        this_class->connect_lock.unlock();
         this_class->forward_end= false;
         MSG_COM Msg;
         Msg.size=0;
@@ -220,7 +288,11 @@ void  server::server_forward(void *arg) {
             delete[] buf;
             if (ret < 0) {
                 DGDBG("id =%d send <0,server_forward\n", this_class->id);
-                this_class->connect_state = false;
+
+                this_class->connect_lock.lock();
+                if(this_class->connect_state==CONNECTED)
+                    this_class->connect_state=DISCONNECT;
+                this_class->connect_lock.unlock();
             } else {
                 DGDBG("server_forwar =%d\n", Msg.size);
             }
@@ -234,16 +306,30 @@ void server::server_rcv(void *arg) {
 
     server *this_class = (server *)arg;
     DGDBG("id=%d server_rcv star! \n",this_class->id);
+    std::unique_lock<std::mutex> mlock(this_class->mutex_notic_connect);
     while (!this_class->end_)
     {
-        if(!this_class->connect_state)
+        this_class->connect_lock.lock();
+        if(this_class->connect_state==DISCONNECT)
         {
+            this_class->connect_lock.unlock();
             this_class->release();
+            if(this_class->idel_time_get()>IDEL_TIME_MAX) {
+                this_class->connect_lock.lock();
+                this_class->connect_state=CONNECT_WAIT;
+                this_class->connect_lock.unlock();
+                this_class->cond_notic_connect.wait(mlock);
+            }
+            this_class->connect_lock.lock();
+            this_class->connect_state=CONNECTING;
+            this_class->connect_lock.unlock();
             if(!this_class->server_connect())
             {
                 sleep(1);
                 continue;
             }
+        } else {
+            this_class->connect_lock.unlock();
         }
         static char buffer[BUFFER_SIZE+1];
         DGDBG("id=%d server waiting rcv! \n",this_class->id);
@@ -252,7 +338,7 @@ void server::server_rcv(void *arg) {
              DGDBG("server recv len%d\n", len);
 
             this_class->commandProcess->process((unsigned char*)buffer,len);
-            this_class->heart_beat=0;
+            this_class->heart_beat_set(0);
         }
         else
         {
@@ -266,7 +352,10 @@ void server::server_rcv(void *arg) {
             else
             {
                 DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
-                this_class->connect_state=false;
+                this_class->connect_lock.lock();
+                if(this_class->connect_state==CONECTED)
+                    this_class->connect_state=0;
+                this_class->connect_lock.unlock();
             }
 #else
             struct tcp_info info;
@@ -277,7 +366,10 @@ void server::server_rcv(void *arg) {
             if(info.tcpi_state!=TCP_ESTABLISHED)
             {
                DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
-               this_class->connect_state=false;
+               this_class->connect_lock.lock();
+               if(this_class->connect_state==CONNECTED)
+                    this_class->connect_state=DISCONNECT;
+               this_class->connect_lock.unlock();
             }
             usleep(1000);
 #endif
@@ -310,10 +402,14 @@ int server::send_all(int socket, char *buf,int size)
 bool server::server_connect()
 {
     printf("id=%d server_connect star! \n",id);
+
     if (connect(server_socket, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
         perror("server connect");
         close(server_socket);
         DGERR("server connect fail ,id=%d",id);
+        connect_lock.lock();
+        connect_state=DISCONNECT;
+        connect_lock.unlock();
         return false;
     }
     else {
@@ -353,12 +449,17 @@ bool server::server_connect()
 
 #endif
         printf("id =%d ,server connect suc \n",id);
-        connect_state=true;
+
         send_sn=0;
+        heart_beat_set(0);
         std::unique_lock<std::mutex> mlock(mutex_connect);
+        connect_lock.lock();
+        connect_state=CONNECTED;
+        connect_lock.unlock();
         mlock.unlock();
         cond_connect.notify_all();
     }
+
     DGDBG("id =%d server_connect exit \n",id);
     return true;
 }

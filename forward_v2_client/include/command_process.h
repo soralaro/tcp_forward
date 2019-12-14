@@ -46,6 +46,7 @@ public:
    void  erease_mforward(unsigned int sockeid);
    bool check_mforward_exist(unsigned int socketid);
    void  add_mforward(forward * Forward);
+   int  get_mforward_size();
    void relase();
    bool *get_encrypt_state;
    unsigned  char encryp_key_2;

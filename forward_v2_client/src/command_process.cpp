@@ -70,6 +70,10 @@ bool command_process::check_mforward_exist(unsigned int socketid)
     }
 }
 
+int command_process::get_mforward_size(){
+    return mforward.size();
+}
+
 void command_process::erease_mforward(unsigned int socketid) {
     auto iter=mforward.find(socketid);
     if(iter!=mforward.end())
