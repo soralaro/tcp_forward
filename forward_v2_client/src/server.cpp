@@ -186,7 +186,6 @@ void server::timer_fuc(void *arg)
     server *this_class = (server *)arg;
     while(!this_class->end_) {
         sleep(3);
-        int tmp=this_class->commandProcess->get_mforward_size();
         if(this_class->commandProcess->get_mforward_size()>0)
         {
             this_class->idel_time_set(0);
@@ -225,6 +224,7 @@ void server::timer_fuc(void *arg)
 }
 void  server::server_forward(void *arg) {
     server *this_class = (server *)arg;
+    unsigned  char ex_buf[128];
 #ifndef  _WIN64    
     signal(SIGPIPE, SIG_IGN);
 #endif
@@ -276,6 +276,7 @@ void  server::server_forward(void *arg) {
             memcpy(&commant, buf, sizeof(commant));
             commant.sn = this_class->send_sn++;
             commant.res0 =rand();
+            commant.ex_size=(0x7f&(rand()));
             commant.user_id=user_id;
             DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ", commant.size, commant.sn, commant.socket_id,
                   commant.com);
@@ -284,6 +285,14 @@ void  server::server_forward(void *arg) {
             des_encrypt((unsigned char *)buf,sizeof(commant));
             des_encrypt_2((unsigned char *)buf+sizeof(commant),ALIGN_16(Msg.size-sizeof(commant)));
             int ret = send_all(this_class->server_socket, buf, ALIGN_16(Msg.size));
+            if(ret>0)
+            {
+                for(int i=0;i<commant.ex_size;i++)
+                {
+                    ex_buf[i]=rand();
+                }
+                ret = send_all(this_class->server_socket, (char *)ex_buf, commant.ex_size);
+            }
 
             delete[] buf;
             if (ret < 0) {

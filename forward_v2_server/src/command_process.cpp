@@ -111,14 +111,14 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
 
     unsigned char *buf=data_in;
     unsigned int   pro_len=len;
-
+    MSG Msg;
     while (pro_len>0) {
         if(server_end==NULL)
         {
             return;
         }
-        MSG Msg;
         Msg.size=0;
+        Msg.type=MSG_TPY ::msg_res;
         switch (state) {
             case com_wait_star: {
                 if (pro_len >= sizeof(command)) {
@@ -127,18 +127,19 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     data_encrypt((unsigned char *)(&command),0,sizeof(command));
                     buf += sizeof(command);
                     pro_len -= sizeof(command);
-                    DGDBG(" command_process state = com_head_rcv_end");
-                    if(command.size>sizeof(command)) {
+
+                    if((ALIGN_16(command.size)+command.ex_size)>sizeof(command)) {
                         state = com_head_rcv_end;
                         commant_cur = sizeof(command);
+                        DGDBG(" command_process state = com_head_rcv_end pro_len=%d",pro_len);
                     } else
                     {
                         state = com_wait_star;
+                        DGDBG(" command_process state = com_wait_star pro_len=%d",pro_len);
                         commant_cur=0;
                     }
                 } else {
                     memcpy((unsigned char *) (&command), buf, pro_len);
-                    buf += pro_len;
                     commant_cur = pro_len;
                     pro_len = 0;
                     DGDBG(" command_process state = com_head_rcv");
@@ -156,7 +157,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     buf += head_remain;
                     pro_len -= head_remain;
                     DGDBG(" command_process state = com_head_rcv_end");
-                    if(command.size>sizeof(command)) {
+                    if((ALIGN_16(command.size)+command.ex_size)>sizeof(command)) {
                         state = com_head_rcv_end;
                         commant_cur = sizeof(command);
                     } else
@@ -166,7 +167,6 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     }
                 } else {
                     memcpy((unsigned char *) (&command) + commant_cur, buf, pro_len);
-                    buf += pro_len;
                     commant_cur += pro_len;
                     pro_len = 0;
                     DGDBG(" command_process state = com_head_rcv");
@@ -185,12 +185,17 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     Msg.size = command.size-sizeof(command);
                     buf += commant_remain;
                     pro_len -= commant_remain;
-                    commant_cur = 0;
+                    if(command.ex_size==0) {
+                        commant_cur = 0;
+                        state = com_wait_star;
+                    } else{
+                        commant_cur +=commant_remain;
+                        state = com_data_rcv_end;
+                    }
                     DGDBG(" command_process state = com_wait_star,pro_len=%d",pro_len);
-                    state = com_wait_star;
+
                 } else {
                     memcpy(command_Buf,buf,pro_len);
-                    buf += pro_len;
                     commant_cur += pro_len;
                     pro_len = 0;
                     DGDBG(" command_process state = com_data_rcv");
@@ -209,12 +214,18 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     Msg.size = command.size-sizeof(command);
                     buf += commant_remain;
                     pro_len -= commant_remain;
-                    commant_cur = 0;
-                    DGDBG(" command_process state = com_wait_star pro_len=%d",pro_len);
-                    state = com_wait_star;
+                    if(command.ex_size==0)
+                    {
+                        commant_cur = 0;
+                        state=com_wait_star;
+                        DGDBG(" command_process state = com_wait_star pro_len=%d",pro_len);
+                    } else {
+                        commant_cur +=commant_remain;
+                        state = com_data_rcv_end;
+                        DGDBG(" command_process state = com_data_rcv_end pro_len=%d",pro_len);
+                    }
                 } else {
                     memcpy(command_Buf+commant_cur-sizeof(command),buf,pro_len);
-                    buf += pro_len;
                     commant_cur += pro_len;
                     pro_len = 0;
                     DGDBG(" command_process state = com_data_rcv ");
@@ -222,10 +233,44 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                 }
                 break;
             }
+            case com_data_rcv_end: {
+                Msg.type=MSG_TPY::msg_ext_data;
+                unsigned int ex_data_remain=command.ex_size;
+                if (pro_len >= ex_data_remain) {
+                    buf+=ex_data_remain;
+                    pro_len-=ex_data_remain;
+                    state = com_wait_star;
+                    commant_cur=0;
+                    DGDBG(" command_process state = com_wait_star pro_len=%d",pro_len);
+                } else{
+                    commant_cur+=pro_len;
+                    pro_len=0;
+                    state=com_ext_rcv;
+                    DGDBG(" command_process state = com_ext_rcv ");
+                }
+                break;
+            }
+            case com_ext_rcv: {
+                Msg.type=MSG_TPY::msg_ext_data;
+                unsigned int ex_data_remain=command.ex_size+ALIGN_16(command.size)-commant_cur;
+                if (pro_len >= ex_data_remain) {
+                    buf+=ex_data_remain;
+                    pro_len-=ex_data_remain;
+                    state = com_wait_star;
+                    commant_cur=0;
+                    DGDBG(" command_process state = com_wait_star pro_len=%d",pro_len);
+                } else{
+                    commant_cur+=pro_len;
+                    pro_len=0;
+                    DGDBG(" command_process state = com_ext_rcv ");
+                    state=com_ext_rcv;
+                }
+                break;
+            }
             cdefault:
                 break;
         }
-        if(state != com_head_rcv)
+        if((state!=com_head_rcv)&&(Msg.type!=MSG_TPY::msg_ext_data))
             rcv_comm_process(command,Msg);
     }
 }

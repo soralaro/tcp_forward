@@ -23,7 +23,8 @@ typedef struct COM_struct
     unsigned char com;
     unsigned char res0;
     unsigned int  sn;
-    unsigned int  user_id;
+    unsigned short ex_size;
+    unsigned short  user_id;
     unsigned int socket_id;
 }COMMANT;
 enum class MSG_TPY
@@ -35,7 +36,9 @@ enum class MSG_TPY
     msg_server_release,
     msg_heart_beat,
     msg_client_expire,
-    msg_exit_client
+    msg_exit_client,
+    msg_ext_data,
+    msg_res
 };
 
 typedef struct MSG_struct
