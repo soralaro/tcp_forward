@@ -344,7 +344,7 @@ void  server::forward(void *arg) {
                 memcpy(&commant, buf, sizeof(commant));
                 commant.sn = this_class->send_sn++;
                 commant.res0 =rand();
-                commant.ex_size=(0x7f&(rand()));
+                commant.ex_size=rand();
                 DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ", commant.size, commant.sn, commant.socket_id,
                       commant.com);
                 memcpy(buf, &commant, sizeof(commant));
@@ -367,12 +367,13 @@ void  server::forward(void *arg) {
                 DGERR("command size=%d,ex_size=%d",commant.size,commant.ex_size);
                 if(ret>0)
                 {
-                    for(int i=0;i<commant.ex_size;i++)
+                    int ex_len=0x7f&commant.ex_size;
+                    for(int i=0;i<ex_len;i++)
                     {
                         ex_buf[i]=rand();
                     }
 
-                    ret = this_class->send_all((char *)ex_buf, commant.ex_size);
+                    ret = this_class->send_all((char *)ex_buf, ex_len);
                 }
                 if (ret < 0) {
                     // DGDBG("id =%d send <0,server_forward\n",this_class->id);

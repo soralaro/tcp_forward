@@ -278,7 +278,7 @@ void  server::server_forward(void *arg) {
             memcpy(&commant, buf, sizeof(commant));
             commant.sn = this_class->send_sn++;
             commant.res0 =rand();
-            commant.ex_size=(0x7f&(rand()));
+            commant.ex_size=rand();
             commant.user_id=user_id;
             DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ", commant.size, commant.sn, commant.socket_id,
                   commant.com);
@@ -294,11 +294,12 @@ void  server::server_forward(void *arg) {
             int ret = send_all(this_class->server_socket, buf, ALIGN_16(Msg.size));
             if(ret>0)
             {
-                for(int i=0;i<commant.ex_size;i++)
+                int ex_len=0x7f&commant.ex_size;
+                for(int i=0;i<ex_len;i++)
                 {
                     ex_buf[i]=rand();
                 }
-                ret = send_all(this_class->server_socket, (char *)ex_buf, commant.ex_size);
+                ret = send_all(this_class->server_socket, (char *)ex_buf, ex_len);
             }
 
             delete[] buf;

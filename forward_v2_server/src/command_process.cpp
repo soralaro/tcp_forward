@@ -128,6 +128,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
 
                     des_decrypt((u_char *)&command,sizeof(command));
                     data_encrypt((unsigned char *)(&command),0,sizeof(command));
+                    command.ex_size=0x7f&command.ex_size;
                     buf += sizeof(command);
                     pro_len -= sizeof(command);
 
@@ -158,6 +159,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     des_decrypt((u_char *)&command,sizeof(command));
 
                     data_encrypt((unsigned char *)(&command),0,sizeof(command));
+                    command.ex_size=0x7f&command.ex_size;
                     buf += head_remain;
                     pro_len -= head_remain;
                     DGDBG(" command_process state = com_head_rcv_end");
