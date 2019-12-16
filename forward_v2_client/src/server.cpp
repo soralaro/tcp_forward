@@ -12,6 +12,7 @@ unsigned char server::encryp_key_2=0xae;
 unsigned int  server::user_id=1;
 char server::des_key[17];
 char server::des_key_2[17];
+char server::des_key_3[17];
 void server::setKey(unsigned  char input_key)
 {
     encryp_key=input_key;
@@ -111,6 +112,7 @@ void server::init(std::string ip ,int port) {
     commandProcess->encryp_key=encryp_key;
     des_encrypt_init(des_key);
     des_encrypt_init_2(des_key_2);
+    des_encrypt_init_3(des_key_3);
     ThreadPool::pool_add_worker(server_rcv, this);
     ThreadPool::pool_add_worker(server_forward, this);
     ThreadPool::pool_add_worker(timer_fuc, this);
@@ -283,7 +285,12 @@ void  server::server_forward(void *arg) {
             memcpy(buf, &commant, sizeof(commant));
             this_class->data_encrypt((unsigned char *) buf, Msg.size);
             des_encrypt((unsigned char *)buf,sizeof(commant));
+
+          
+            des_encrypt_3((unsigned char *)buf,sizeof(commant));
+
             des_encrypt_2((unsigned char *)buf+sizeof(commant),ALIGN_16(Msg.size-sizeof(commant)));
+            des_encrypt_3((unsigned char *)buf+sizeof(commant),ALIGN_16(Msg.size-sizeof(commant)));
             int ret = send_all(this_class->server_socket, buf, ALIGN_16(Msg.size));
             if(ret>0)
             {

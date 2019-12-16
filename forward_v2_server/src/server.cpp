@@ -13,6 +13,7 @@ unsigned char server::encryp_key=0x55;
 unsigned char server::encryp_key_2=0xae;
 char server::des_key[17];
 char server::des_key_2[17];
+char server::des_key_3[17];
 std::vector<server *> server::server_Pool;
 std::map<unsigned int ,unsigned int> server::mapUsr;
 void server::setKey(unsigned  char input_key)
@@ -83,6 +84,12 @@ void server::setDesKey_2(char *key)
     memcpy(des_key_2,key,sizeof(des_key_2)-1);
     des_encrypt_init_2(des_key_2);
 };
+void server::setDesKey_3(char *key)
+{
+    memset(des_key_3,0,sizeof(des_key_3));
+    memcpy(des_key_3,key,sizeof(des_key_3)-1);
+    des_encrypt_init_3(des_key_3);
+}
 server::server()
 {
     end_=true;
@@ -350,7 +357,10 @@ void  server::forward(void *arg) {
                 }
 
                 des_encrypt(buf,sizeof(commant));
+                des_encrypt_3(buf,sizeof(commant));
                 des_encrypt_2(buf+sizeof(commant),ALIGN_16(Msg.size-sizeof(commant)));
+
+                des_encrypt_3(buf+sizeof(commant),ALIGN_16(Msg.size-sizeof(commant)));
                 int ret = this_class->send_all(buf, ALIGN_16(Msg.size));
 
                 delete[] buf;

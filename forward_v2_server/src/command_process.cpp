@@ -123,6 +123,9 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
             case com_wait_star: {
                 if (pro_len >= sizeof(command)) {
                     memcpy(&command, buf, sizeof(command));
+
+                    des_decrypt_3((u_char *)&command,sizeof(command));
+
                     des_decrypt((u_char *)&command,sizeof(command));
                     data_encrypt((unsigned char *)(&command),0,sizeof(command));
                     buf += sizeof(command);
@@ -151,6 +154,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                 unsigned int head_remain = sizeof(command) - commant_cur;
                 if (pro_len >= head_remain) {
                     memcpy((unsigned char *) (&command) + commant_cur, buf, head_remain);
+                    des_decrypt_3((u_char *)&command,sizeof(command));
                     des_decrypt((u_char *)&command,sizeof(command));
 
                     data_encrypt((unsigned char *)(&command),0,sizeof(command));
@@ -178,6 +182,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                 unsigned int commant_remain = ALIGN_16(command.size) - sizeof(command);
                 if (pro_len >= commant_remain) {
                     Msg.size = commant_remain;
+                    des_decrypt_3(buf,commant_remain);
                     des_decrypt_2(buf,commant_remain);
                     data_encrypt(buf,commant_cur,command.size - sizeof(command));
                     Msg.type = MSG_TPY::msg_server_rcv;
@@ -207,6 +212,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                 unsigned int commant_remain = ALIGN_16(command.size) - commant_cur;
                 if (pro_len >= commant_remain) {
                     memcpy(command_Buf+commant_cur-sizeof(command),buf,commant_remain);
+                    des_decrypt_3(command_Buf, ALIGN_16(command.size)-sizeof(command));
                     des_decrypt_2(command_Buf, ALIGN_16(command.size)-sizeof(command));
                     data_encrypt(command_Buf,sizeof(command),command.size-sizeof(command));
                     Msg.type = MSG_TPY::msg_server_rcv;
