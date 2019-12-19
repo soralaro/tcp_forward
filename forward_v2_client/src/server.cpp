@@ -278,11 +278,21 @@ void  server::server_forward(void *arg) {
             memcpy(&commant, buf, sizeof(commant));
             commant.sn = this_class->send_sn++;
             commant.res0 =rand();
+            commant.res1=rand();
+            commant.res2=rand();
+            commant.res3=rand();
+            commant.res4=rand();
             commant.ex_size=rand();
             commant.user_id=user_id;
             DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ", commant.size, commant.sn, commant.socket_id,
                   commant.com);
             memcpy(buf, &commant, sizeof(commant));
+            int align_len=ALIGN_16(Msg.size)-Msg.size;
+            unsigned char *p=(unsigned char *)(buf+Msg.size);
+            for(int i=0;i<align_len;i++)
+            {
+                p[i]=rand();
+            }
             this_class->data_encrypt((unsigned char *) buf, Msg.size);
             des_encrypt((unsigned char *)buf,sizeof(commant));
 

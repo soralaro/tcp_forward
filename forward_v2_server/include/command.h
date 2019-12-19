@@ -17,16 +17,20 @@ enum class socket_command
     user_expire=0x39,
     exceed_max_device=0x3a
 };
-typedef struct COM_struct
-{
+typedef struct COM_struct {
+    unsigned int res0;
     unsigned short size;
     unsigned char com;
-    unsigned char res0;
-    unsigned int  sn;
+    unsigned char res1;
+    unsigned int sn;
+    unsigned int res2;
     unsigned short ex_size;
-    unsigned short  user_id;
+    unsigned short user_id;
+    unsigned int res3;
+    unsigned int res4;
     unsigned int socket_id;
-}COMMANT;
+} COMMANT;
+
 enum class MSG_TPY
 {
     msg_client_rcv=0,

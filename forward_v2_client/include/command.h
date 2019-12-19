@@ -18,12 +18,16 @@ enum class socket_command
 };
 typedef struct COM_struct
 {
+    unsigned int res0;
     unsigned short size;
     unsigned char com;
-    unsigned char res0;
+    unsigned char res1;
     unsigned int  sn;
+    unsigned int res2;
     unsigned short ex_size;
     unsigned short  user_id;
+    unsigned int res3;
+    unsigned int res4;
     unsigned int socket_id;
 }COMMANT;
 enum class MSG_TPY

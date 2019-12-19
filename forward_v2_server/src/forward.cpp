@@ -105,7 +105,7 @@ void forward::server_rcv(void *arg) {
         }
         while (!this_class->end_) {
             char *buffer = new char[BUFFER_SIZE];
-            int len = recv(this_class->server_socket, buffer+sizeof(COMMANT), BUFFER_SIZE-sizeof(COMMANT), 0);
+            int len = recv(this_class->server_socket, buffer+sizeof(COMMANT), BUFFER_SIZE-sizeof(COMMANT)-8, 0);
             if (len > 0) {
                  DGDBG("client recv len%d\n", len);
                 if(this_class->q_client_msg==NULL)
