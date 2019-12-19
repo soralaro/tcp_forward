@@ -12,6 +12,7 @@ unsigned char server::encryp_key_2=0xae;
 unsigned int  server::user_id=1;
 char server::des_key[17];
 char server::des_key_2[17];
+char server::des_key_3[17];
 void server::setKey(unsigned  char input_key)
 {
     encryp_key=input_key;
@@ -111,6 +112,7 @@ void server::init(std::string ip ,int port) {
     commandProcess->encryp_key=encryp_key;
     des_encrypt_init(des_key);
     des_encrypt_init_2(des_key_2);
+    des_encrypt_init_3(des_key_3);
     ThreadPool::pool_add_worker(server_rcv, this);
     ThreadPool::pool_add_worker(server_forward, this);
     ThreadPool::pool_add_worker(timer_fuc, this);
@@ -186,7 +188,6 @@ void server::timer_fuc(void *arg)
     server *this_class = (server *)arg;
     while(!this_class->end_) {
         sleep(3);
-        int tmp=this_class->commandProcess->get_mforward_size();
         if(this_class->commandProcess->get_mforward_size()>0)
         {
             this_class->idel_time_set(0);
@@ -225,6 +226,7 @@ void server::timer_fuc(void *arg)
 }
 void  server::server_forward(void *arg) {
     server *this_class = (server *)arg;
+    unsigned  char ex_buf[128];
 #ifndef  _WIN64    
     signal(SIGPIPE, SIG_IGN);
 #endif
@@ -276,14 +278,29 @@ void  server::server_forward(void *arg) {
             memcpy(&commant, buf, sizeof(commant));
             commant.sn = this_class->send_sn++;
             commant.res0 =rand();
+            commant.ex_size=rand();
             commant.user_id=user_id;
             DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ", commant.size, commant.sn, commant.socket_id,
                   commant.com);
             memcpy(buf, &commant, sizeof(commant));
             this_class->data_encrypt((unsigned char *) buf, Msg.size);
             des_encrypt((unsigned char *)buf,sizeof(commant));
+
+          
+            des_encrypt_3((unsigned char *)buf,sizeof(commant));
+
             des_encrypt_2((unsigned char *)buf+sizeof(commant),ALIGN_16(Msg.size-sizeof(commant)));
+            des_encrypt_3((unsigned char *)buf+sizeof(commant),ALIGN_16(Msg.size-sizeof(commant)));
             int ret = send_all(this_class->server_socket, buf, ALIGN_16(Msg.size));
+            if(ret>0)
+            {
+                int ex_len=0x7f&commant.ex_size;
+                for(int i=0;i<ex_len;i++)
+                {
+                    ex_buf[i]=rand();
+                }
+                ret = send_all(this_class->server_socket, (char *)ex_buf, ex_len);
+            }
 
             delete[] buf;
             if (ret < 0) {

@@ -37,6 +37,7 @@ public:
     static void setKey_2(unsigned  char input_key){encryp_key_2=input_key;};
     static void setDesKey(char *key);
     static void setDesKey_2(char *key);
+    static void setDesKey_3(char *key);
     static void server_pool_int(int max_num);
     static void server_pool_destroy();
     static server * server_pool_get();
@@ -63,6 +64,7 @@ private:
     static  unsigned  char encryp_key_2;
     static char des_key[17];
     static char des_key_2[17];
+    static char des_key_3[17];
     unsigned char *encry_data;
     command_process *commandProcess;
     unsigned int send_sn;

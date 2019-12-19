@@ -19,6 +19,7 @@
 #define USR_ID      1
 #define DES_KEY     "qwertyuiopasdfgh"
 #define DES_KEY2    "qwertyuiopasdfgh"
+#define DES_KEY3    "qwertyuiopasdfgh"
 char* getCmdOption(char ** begin, char ** end, const std::string & option)
 {
     char ** itr = std::find(begin, end, option);
@@ -29,7 +30,8 @@ char* getCmdOption(char ** begin, char ** end, const std::string & option)
     return 0;
 }
 
-int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::string& local_ip,std::string& server_ip,int& max_connect,unsigned char& encryp_key,unsigned char& encryp_key_2,char *des_key,char *des_key_2)
+int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::string& local_ip,std::string& server_ip,int& max_connect,unsigned char& encryp_key,unsigned char& encryp_key_2,char *des_key,
+        char *des_key_2,char *des_key_3)
 {
     char *stop_str;
     char * local_port_c = getCmdOption(argv, argv + argc, "-l");
@@ -68,6 +70,9 @@ int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::st
     char * des_key_2_c = getCmdOption(argv, argv + argc, "-k");
     if (des_key_2_c)
         memcpy(des_key_2,des_key_2_c,16);
+    char * des_key_3_c = getCmdOption(argv, argv + argc, "-K");
+    if (des_key_3_c)
+        memcpy(des_key_3,des_key_3_c,16);
 
 #if 0
     if (argc<2)
@@ -81,6 +86,7 @@ int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::st
                   << "-e encryp_key_2 "
                   << "-d des_key "
                   << "-k des_key_2 "
+                  << "-K des_key_3 "
                   << std::endl;
         return -1;
     }
@@ -113,11 +119,14 @@ int main(int argc, char** argv) {
     unsigned char encryp_key_2=ENCRYP_KEY_2;
     char *default_des_key =DES_KEY;
     char *default_des_key_2 =DES_KEY2;
+    char *default_des_key_3 =DES_KEY3;
     char des_key[17];
     memcpy(des_key,default_des_key,sizeof(des_key));
     char des_key_2[17];
     memcpy(des_key_2,default_des_key_2,sizeof(des_key_2));
-    cmdParse(argc, argv, local_port, server_port,local_ip, server_ip, max_connect, encryp_key, encryp_key_2,des_key,des_key_2);
+    char des_key_3[17];
+    memcpy(des_key_3,default_des_key_3,sizeof(des_key_3));
+    cmdParse(argc, argv, local_port, server_port,local_ip, server_ip, max_connect, encryp_key, encryp_key_2,des_key,des_key_2,des_key_3);
     forward::setKey(encryp_key);
     ThreadPool::pool_init(max_connect+3);
     forward::forward_pool_int(max_connect);
@@ -127,6 +136,7 @@ int main(int argc, char** argv) {
     Server.setKey_2(encryp_key_2);
     Server.setDesKey(des_key);
     Server.setDesKey_2(des_key_2);
+    Server.setDesKey_3(des_key_3);
     Server.init(server_ip,server_port);
 
     int conn;

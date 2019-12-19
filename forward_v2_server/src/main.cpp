@@ -15,6 +15,7 @@
 #define ENCRYP_KEY_2  0Xff
 #define DES_KEY     "qwertyuiopasdfgh"
 #define DES_KEY2    "qwertyuiopasdfgh"
+#define DES_KEY3    "qwertyuiopasdfgh"
 
 char* getCmdOption(char ** begin, char ** end, const std::string & option)
 {
@@ -27,7 +28,7 @@ char* getCmdOption(char ** begin, char ** end, const std::string & option)
 }
 
 int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::string& server_ip,int& max_connect,unsigned char& encryp_key,
-        unsigned char& encryp_key_2,int &max_device,char *des_key,char *des_key_2)
+        unsigned char& encryp_key_2,int &max_device,char *des_key,char *des_key_2,char *des_key_3)
 {
     char *stop_str;
     char * local_port_c = getCmdOption(argv, argv + argc, "-l");
@@ -66,6 +67,10 @@ int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::st
     if (des_key_2_c)
         memcpy(des_key_2,des_key_2_c,16);
 
+    char * des_key_3_c = getCmdOption(argv, argv + argc, "-K");
+    if (des_key_3_c)
+        memcpy(des_key_3,des_key_3_c,16);
+
     if (argc<2)
     {
         std::cout << "Usage: ./app_name "
@@ -78,7 +83,8 @@ int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::st
                   << "-m max_device "
                   << "-d des_key "
                   << "-k des_key_2 "
-                  << std::endl;
+                  << "-K des_key_3 "
+                << std::endl;
         return -1;
     }
     return 0;
@@ -94,16 +100,20 @@ int main(int argc, char** argv) {
     int max_device=MAX_DEVICE;
     char *default_des_key =DES_KEY;
     char *default_des_key_2 =DES_KEY2;
+    char *default_des_key_3 =DES_KEY3;
     char des_key[17];
     char des_key_2[17];
+    char des_key_3[17];
     memcpy(des_key,default_des_key,sizeof(des_key));
     memcpy(des_key_2,default_des_key_2,sizeof(des_key_2));
-    cmdParse(argc, argv, local_port, server_port, server_ip, max_connect, encryp_key, encryp_key_2,max_device,des_key,des_key_2);
+    memcpy(des_key_3,default_des_key_3,sizeof(des_key_3));
+    cmdParse(argc, argv, local_port, server_port, server_ip, max_connect, encryp_key, encryp_key_2,max_device,des_key,des_key_2,des_key_3);
     forward::setKey(encryp_key);
     ThreadPool::pool_init(max_connect+max_device*3);
     server::server_pool_int(max_device);
     server::setDesKey(des_key);
     server::setDesKey_2(des_key_2);
+    server::setDesKey_3(des_key_3);
     struct sockaddr_in servaddr;
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(server_port);  ///服务器端口

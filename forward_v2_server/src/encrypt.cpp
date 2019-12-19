@@ -2,18 +2,23 @@
 #include <string>
 #include <string.h>
 #include "encrypt.h"
+#include "gdb_log.h"
 #define LENGTH 16
 #define EN0	0	/* MODE == encrypt */
 #define DE1	1	/* MODE == decrypt */
 extern "C" {
 extern void des2key(unsigned char *, short);
 extern void des2key_2(unsigned char *, short);
+extern void des2key_3(unsigned char *, short);
 extern void D2des(unsigned char *, unsigned char *);
 extern void D2des_2(unsigned char *, unsigned char *);
+extern void D2des_3(unsigned char *, unsigned char *);
 extern void des2key_de(unsigned char *, short);
 extern void des2key_de_2(unsigned char *, short);
+extern void des2key_de_3(unsigned char *, short);
 extern void D2des_de(unsigned char *, unsigned char *);
 extern void D2des_de_2(unsigned char *, unsigned char *);
+extern void D2des_de_3(unsigned char *, unsigned char *);
 }
 using namespace std;
 static const char *default_key = "~!@#$%^&*()_+QWE";
@@ -40,6 +45,19 @@ void des_encrypt_init_2(const char *key)
     {
         des2key_2((unsigned char *) key, EN0);
         des2key_de_2((unsigned char *) key, DE1);
+    }
+}
+
+void des_encrypt_init_3(const char *key)
+{
+    if(key==NULL) {
+        des2key_3((unsigned char *) default_key, EN0);
+        des2key_de_3((unsigned char *) default_key, DE1);
+    }
+    else
+    {
+        des2key_3((unsigned char *) key, EN0);
+        des2key_de_3((unsigned char *) key, DE1);
     }
 }
 
@@ -98,6 +116,63 @@ void des_decrypt_2(unsigned char *buf,int size)
             memcpy(p,encrypt,LENGTH);
         p+=LENGTH;
     }
+}
+
+void des_encrypt_3(unsigned char *buf,int size)
+{
+    if(size==0)
+    {
+        return;
+    }
+    unsigned char encrypt[LENGTH];
+    unsigned char buf_last_first[LENGTH];
+    unsigned char *p=buf;
+    if(size%LENGTH!=0)
+    {
+        DGFAT("size%LENGTH!=0");
+    }
+    int half_len=LENGTH/2;
+    int num=size/LENGTH;
+    p+=half_len;
+    for(int i=1;i<num;i++)
+    {
+        D2des_3(p,encrypt);
+        memcpy(p,encrypt,LENGTH);
+        p+=LENGTH;
+    }
+    memcpy(buf_last_first,buf+size-half_len,half_len);
+    memcpy(buf_last_first+half_len,buf,half_len);
+    D2des_3(buf_last_first,encrypt);
+    memcpy(buf+size-half_len,encrypt,half_len);
+    memcpy(buf,encrypt+half_len,half_len);
+}
+void des_decrypt_3(unsigned char *buf,int size)
+{
+    if(size==0)
+    {
+        return;
+    }
+    unsigned char encrypt[LENGTH];
+    unsigned char buf_last_first[LENGTH];
+    unsigned char *p=buf;
+    if(size%LENGTH!=0)
+    {
+        DGFAT("size%LENGTH!=0");
+    }
+    int half_len=LENGTH/2;
+    int num=size/LENGTH;
+    p+=half_len;
+    for(int i=1;i<num;i++)
+    {
+        D2des_de_3(p,encrypt);
+        memcpy(p,encrypt,LENGTH);
+        p+=LENGTH;
+    }
+    memcpy(buf_last_first,buf+size-half_len,half_len);
+    memcpy(buf_last_first+half_len,buf,half_len);
+    D2des_de_3(buf_last_first,encrypt);
+    memcpy(buf+size-half_len,encrypt,half_len);
+    memcpy(buf,encrypt+half_len,half_len);
 }
 
 #if 0

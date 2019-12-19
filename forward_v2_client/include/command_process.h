@@ -38,6 +38,8 @@ class command_process
         com_head_rcv,
         com_head_rcv_end,
         com_data_rcv,
+        com_data_rcv_end,
+        com_ext_rcv
     }COMMANT_STATE;
 public:
     command_process(BlockQueue<MSG_COM> *q_msg);
