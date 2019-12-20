@@ -16,6 +16,7 @@ char server::des_key_2[17];
 char server::des_key_3[17];
 std::vector<server *> server::server_Pool;
 std::map<unsigned int ,unsigned int> server::mapUsr;
+std::mutex server::mapUsr_lock;
 void server::setKey(unsigned  char input_key)
 {
     encryp_key=input_key;
@@ -107,6 +108,7 @@ server::server()
     commandProcess=new command_process(&q_client_msg);
     commandProcess->usr_id=&usr_id;
     commandProcess->mapUsr=&mapUsr;
+    commandProcess->mapUsr_lock=&mapUsr_lock;
     encry_data=NULL;
 }
 server::~server()
@@ -201,6 +203,7 @@ void server::release()
     DGDBG("id=%d release end !\n",id);
     if(usr_id!=-1)
     {
+        mapUsr_lock.lock();
         auto iter = mapUsr.find(usr_id);
         if(iter!=mapUsr.end())
         {
@@ -210,6 +213,7 @@ void server::release()
                 mapUsr.erase(iter);
             }
         }
+        mapUsr_lock.unlock();
     }
     id=0;
     usr_id=-1;

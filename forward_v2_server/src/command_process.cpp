@@ -326,6 +326,7 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
         }
         else
         {
+            mapUsr_lock->lock();
             auto iter = mapUsr->find(*usr_id);
             if(iter != mapUsr->end())
             {
@@ -351,6 +352,7 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
             {
                 mapUsr->insert(std::pair<unsigned int ,unsigned int >(*usr_id,1));
             }
+            mapUsr_lock->unlock();
         }
         log(1);
     }

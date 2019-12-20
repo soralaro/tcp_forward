@@ -55,6 +55,7 @@ public:
     int *usr_id;
     struct sockaddr_in *client_addr;
     std::map<unsigned int ,unsigned int> *mapUsr;
+    std::mutex *mapUsr_lock;
 private:
     void rcv_comm_process(COMMANT com,MSG Msg);
     void data_encrypt(unsigned char *buf,unsigned int cur, int len);
