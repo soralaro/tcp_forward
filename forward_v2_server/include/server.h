@@ -74,6 +74,9 @@ private:
     static std::map<int ,int> mapUsr;
     static std::mutex mapUsr_lock;
 private:
+    std::mutex waite_forward_end_lock;
+    bool waite_forward_end_state;
+
     std::mutex mutex_client_socket;
     std::condition_variable cond_client_socket;
 

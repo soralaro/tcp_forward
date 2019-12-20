@@ -102,6 +102,7 @@ server::server()
     forward_end=true;
     rcv_end=true;
     connect_exist_time=0;
+    waite_forward_end_state=false;
     ThreadPool::pool_add_worker(server_rcv, this);
     ThreadPool::pool_add_worker(forward, this);
     ThreadPool::pool_add_worker(timer_fuc, this);
@@ -177,6 +178,7 @@ void server::init(unsigned int g_id,int socket_int,struct sockaddr_in addr) {
 }
 void server::release()
 {
+    waite_forward_end_lock.lock();
     if(!forward_end)
     {
         MSG msg;
@@ -185,7 +187,12 @@ void server::release()
         msg.msg=NULL;
         q_client_msg.push(msg);
         std::unique_lock<std::mutex> mlock(mutex_forward_end);
+        waite_forward_end_state=true;
+        waite_forward_end_lock.unlock();
         cond_forward_end.wait(mlock);
+        waite_forward_end_state=false;
+    } else{
+        waite_forward_end_lock.unlock();
     }
 
     commandProcess->relase();
@@ -201,6 +208,7 @@ void server::release()
         encry_data=NULL;
     }
     DGDBG("id=%d release end !\n",id);
+    int dev_num=0;
     if(usr_id!=-1)
     {
         mapUsr_lock.lock();
@@ -208,6 +216,7 @@ void server::release()
         if(iter!=mapUsr.end())
         {
             iter->second--;
+            dev_num=iter->second;
             if(iter->second<=0)
             {
                 mapUsr.erase(iter);
@@ -215,6 +224,7 @@ void server::release()
         }
         mapUsr_lock.unlock();
     }
+    commandProcess->log(0,usr_id,dev_num);
     id=0;
     usr_id=-1;
     close(client_socket);
@@ -296,7 +306,7 @@ void server::server_rcv(void *arg) {
             }
         }
         this_class->rcv_end=true;
-        this_class->commandProcess->log(0,this_class->usr_id,0);
+
         this_class->release();
     }
     DGDBG("id =%d server_rcv exit \n",this_class->id);
@@ -404,13 +414,15 @@ void  server::forward(void *arg) {
             }
 
         }
+        this_class->waite_forward_end_lock.lock();
         this_class->end_=true;
         this_class->forward_end=true;
-        if(this_class->rcv_end) {
+        if(this_class->waite_forward_end_state) {
             std::unique_lock<std::mutex> mlock(this_class->mutex_forward_end);
             mlock.unlock();
             this_class->cond_forward_end.notify_all();
         }
+        this_class->waite_forward_end_lock.unlock();
     }
 
     DGDBG("id =%d server_forward exit \n",this_class->id);
