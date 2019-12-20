@@ -71,7 +71,7 @@ private:
     char heart_beat;
     unsigned int connect_exist_time;
     int usr_id;
-    static std::map<unsigned int ,unsigned int> mapUsr;
+    static std::map<int ,int> mapUsr;
     static std::mutex mapUsr_lock;
 private:
     std::mutex mutex_client_socket;

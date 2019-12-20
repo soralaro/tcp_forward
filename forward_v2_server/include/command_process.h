@@ -48,13 +48,13 @@ public:
     void relase();
     void erease_mforward(unsigned int socket_id);
     bool check_mforward_exist(unsigned int socketid);
-    void log(int login_out);
+    void log(int login_out,int usrId,int dev_num);
     BlockQueue<MSG> *q_client_msg;
     unsigned char *encry_data;
     bool *server_end;
     int *usr_id;
     struct sockaddr_in *client_addr;
-    std::map<unsigned int ,unsigned int> *mapUsr;
+    std::map<int ,int> *mapUsr;
     std::mutex *mapUsr_lock;
 private:
     void rcv_comm_process(COMMANT com,MSG Msg);

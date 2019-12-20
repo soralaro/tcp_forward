@@ -15,7 +15,7 @@ char server::des_key[17];
 char server::des_key_2[17];
 char server::des_key_3[17];
 std::vector<server *> server::server_Pool;
-std::map<unsigned int ,unsigned int> server::mapUsr;
+std::map<int ,int> server::mapUsr;
 std::mutex server::mapUsr_lock;
 void server::setKey(unsigned  char input_key)
 {
@@ -296,7 +296,7 @@ void server::server_rcv(void *arg) {
             }
         }
         this_class->rcv_end=true;
-        this_class->commandProcess->log(0);
+        this_class->commandProcess->log(0,this_class->usr_id,0);
         this_class->release();
     }
     DGDBG("id =%d server_rcv exit \n",this_class->id);

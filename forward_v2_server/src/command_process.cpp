@@ -82,7 +82,7 @@ void command_process::relase()
     max_sn=0;
 }
 
-void command_process::log(int login_out)
+void command_process::log(int login_out,int usrId,int dev_num)
 {
     time_t now = time(0);// 基于当前系统的当前日期/时间
     tm *tm_now = localtime(&now);
@@ -99,9 +99,9 @@ void command_process::log(int login_out)
         char strTime[32];
         strftime(strTime, sizeof(strTime), "%Y-%m-%d %H:%M:%S", tm_now);
         if(login_out==1)
-            fprintf(flog, "%s %s id=%d login\n", strTime,inet_ntoa(client_addr->sin_addr),*usr_id);
+            fprintf(flog, "%s %s id=%d login,dev_num=%d\n", strTime,inet_ntoa(client_addr->sin_addr),usrId,dev_num);
         else
-            fprintf(flog, "%s %s id=%d logout\n", strTime,inet_ntoa(client_addr->sin_addr),*usr_id);
+            fprintf(flog, "%s %s id=%d logout,dev_num=%d\n", strTime,inet_ntoa(client_addr->sin_addr),usrId,dev_num);
         fclose(flog);
     }
 }
@@ -305,56 +305,50 @@ void command_process::rcv_comm_process(COMMANT com,MSG Msg)
         DGERR("rcv_comm_process_HEAD size=%x,sn=%x,id=%x,com=%x ",command.size,command.sn,command.socket_id,command.com);
         return;
     }
-    if(*usr_id==-1)
-    {
-        *usr_id=com.user_id;
-        if(mysql.query_expire(*usr_id))
-        {
+    if (*usr_id == -1) {
+        *usr_id = com.user_id;
+        int dev_num = 0;
+        mapUsr_lock->lock();
+        auto iter = mapUsr->find(*usr_id);
+        if (iter != mapUsr->end()) {
+            iter->second++;
+            dev_num = iter->second;
+            if (iter->second > ONE_USER_MAX_DEVICE) {
+                MSG Msg_send;
+                //add a user expire
+                Msg_send.type = MSG_TPY::msg_exit_client;
+                Msg_send.socket_id = 1;
+                char *buffer1 = new char[sizeof(COMMANT)];
+                Msg_send.msg = buffer1;
+                Msg_send.size = sizeof(COMMANT);
+                COMMANT commant1;
+                commant1.size = sizeof(COMMANT);
+                commant1.com = (unsigned int) socket_command::exceed_max_device;
+                commant1.socket_id = 1;
+                memcpy(buffer1, &commant1, sizeof(COMMANT));
+                q_client_msg->push(Msg_send);
+            }
+        } else {
+            mapUsr->insert(std::pair<unsigned int, unsigned int>(*usr_id, 1));
+            dev_num =1;
+        }
+        log(1,com.user_id, dev_num);
+        mapUsr_lock->unlock();
+        if (mysql.query_expire(*usr_id)) {
             MSG Msg_send;
             //add a user expire
             Msg_send.type = MSG_TPY::msg_client_expire;
-            Msg_send.socket_id=1;
+            Msg_send.socket_id = 1;
             char *buffer1 = new char[sizeof(COMMANT)];
             Msg_send.msg = buffer1;
-            Msg_send.size=sizeof(COMMANT);
+            Msg_send.size = sizeof(COMMANT);
             COMMANT commant1;
-            commant1.size=sizeof(COMMANT);
-            commant1.com=(unsigned int)socket_command::user_expire;
-            commant1.socket_id=1;
-            memcpy(buffer1,&commant1,sizeof(COMMANT));
+            commant1.size = sizeof(COMMANT);
+            commant1.com = (unsigned int) socket_command::user_expire;
+            commant1.socket_id = 1;
+            memcpy(buffer1, &commant1, sizeof(COMMANT));
             q_client_msg->push(Msg_send);
         }
-        else
-        {
-            mapUsr_lock->lock();
-            auto iter = mapUsr->find(*usr_id);
-            if(iter != mapUsr->end())
-            {
-                iter->second++;
-                if(iter->second>ONE_USER_MAX_DEVICE)
-                {
-                    MSG Msg_send;
-                    //add a user expire
-                    Msg_send.type = MSG_TPY::msg_exit_client;
-                    Msg_send.socket_id=1;
-                    char *buffer1 = new char[sizeof(COMMANT)];
-                    Msg_send.msg = buffer1;
-                    Msg_send.size=sizeof(COMMANT);
-                    COMMANT commant1;
-                    commant1.size=sizeof(COMMANT);
-                    commant1.com=(unsigned int)socket_command::exceed_max_device;
-                    commant1.socket_id=1;
-                    memcpy(buffer1,&commant1,sizeof(COMMANT));
-                    q_client_msg->push(Msg_send);
-                }
-            }
-            else
-            {
-                mapUsr->insert(std::pair<unsigned int ,unsigned int >(*usr_id,1));
-            }
-            mapUsr_lock->unlock();
-        }
-        log(1);
     }
     switch(com.com)
     {
