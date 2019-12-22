@@ -63,58 +63,90 @@ void des_encrypt_init_3(const char *key)
 
 void des_encrypt(unsigned char *buf,int size)
 {
+    if(size==0)
+    {
+        return;
+    }
+    if(size%LENGTH!=0)
+    {
+        DGFAT("size%LENGTH!=0");
+        return;
+    }
+    int half_len=LENGTH/2;
+    int num=size/half_len-1;
     unsigned char encrypt[LENGTH];
-    unsigned char *p=buf;
-    for(int i=0;i<size;i+=LENGTH)
+    unsigned char *p=buf+size-LENGTH;
+    for(int i=0;i<num;i++)
     {
         D2des(p,encrypt);
-        if(size-i<LENGTH)
-            memcpy(p,encrypt,size-i);
-        else
-            memcpy(p,encrypt,LENGTH);
-        p+=LENGTH;
+        memcpy(p,encrypt,LENGTH);
+        p-=half_len;
     }
 }
 void des_decrypt(unsigned char *buf,int size)
 {
+    if(size==0)
+    {
+        return;
+    }
+    if(size%LENGTH!=0)
+    {
+        DGFAT("size%LENGTH!=0");
+        return;
+    }
+    int half_len=LENGTH/2;
+    int num=size/half_len-1;
     unsigned char encrypt[LENGTH];
     unsigned char *p=buf;
-    for(int i=0;i<size;i+=LENGTH)
+    for(int i=0;i<num;i++)
     {
         D2des_de(p,encrypt);
-        if(size-i<LENGTH)
-            memcpy(p,encrypt,size-i);
-        else
-            memcpy(p,encrypt,LENGTH);
-        p+=LENGTH;
+        memcpy(p,encrypt,LENGTH);
+        p+=half_len;
     }
 }
 void des_encrypt_2(unsigned char *buf,int size)
 {
+    if(size==0)
+    {
+        return;
+    }
+    if(size%LENGTH!=0)
+    {
+        DGFAT("size%LENGTH!=0");
+        return;
+    }
+    int half_len=LENGTH/2;
+    int num=size/half_len-1;
     unsigned char encrypt[LENGTH];
-    unsigned char *p=buf;
-    for(int i=0;i<size;i+=LENGTH)
+    unsigned char *p=buf+size-LENGTH;
+    for(int i=0;i<num;i++)
     {
         D2des_2(p,encrypt);
-        if(size-i<LENGTH)
-            memcpy(p,encrypt,size-i);
-        else
-            memcpy(p,encrypt,LENGTH);
-        p+=LENGTH;
+        memcpy(p,encrypt,LENGTH);
+        p-=half_len;
     }
 }
 void des_decrypt_2(unsigned char *buf,int size)
 {
+    if(size==0)
+    {
+        return;
+    }
+    if(size%LENGTH!=0)
+    {
+        DGFAT("size%LENGTH!=0");
+        return;
+    }
+    int half_len=LENGTH/2;
+    int num=size/half_len-1;
     unsigned char encrypt[LENGTH];
     unsigned char *p=buf;
-    for(int i=0;i<size;i+=LENGTH)
+    for(int i=0;i<num;i++)
     {
         D2des_de_2(p,encrypt);
-        if(size-i<LENGTH)
-            memcpy(p,encrypt,size-i);
-        else
-            memcpy(p,encrypt,LENGTH);
-        p+=LENGTH;
+        memcpy(p,encrypt,LENGTH);
+        p+=half_len;
     }
 }
 
