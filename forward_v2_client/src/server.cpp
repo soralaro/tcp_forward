@@ -110,6 +110,8 @@ void server::init(std::string ip ,int port) {
     idel_time_set(0);
     commandProcess->encryp_key_2=encryp_key_2;
     commandProcess->encryp_key=encryp_key;
+    commandProcess->mutex_rcv_encrpt=&mutex_rcv_encrpt;
+    commandProcess->cond_rcv_encrpt=&cond_rcv_encrpt;
     des_encrypt_init(des_key);
     des_encrypt_init_2(des_key_2);
     des_encrypt_init_3(des_key_3);
@@ -132,13 +134,13 @@ bool server::add_forward(unsigned int g_id, int socket_int) {
         {
             connect_lock.unlock();
         }
-        return false;
+       // return false;
     } else {
         connect_lock.unlock();
     }
     if(!get_encrypt_state)
     {
-        return false;
+        //return false;
     }
     forward *forward = forward::forward_pool_get();
     if(forward!=NULL) {
@@ -230,15 +232,15 @@ void  server::server_forward(void *arg) {
 #ifndef  _WIN64    
     signal(SIGPIPE, SIG_IGN);
 #endif
-    std::unique_lock<std::mutex> mlock(this_class->mutex_connect);
+    std::unique_lock<std::mutex> mlock(this_class->mutex_rcv_encrpt);
     DGDBG("id =%d server_forward start \n",this_class->id);
     while (!this_class->end_) {
         this_class->connect_lock.lock();
-        while(this_class->connect_state!=CONNECTED)
+        while(this_class->connect_state!=CONNECTED||this_class->get_encrypt_state!=true)
         {
             this_class->connect_lock.unlock();
             this_class->forward_end=true;
-            this_class->cond_connect.wait(mlock);
+            this_class->cond_rcv_encrpt.wait(mlock);
             this_class->connect_lock.lock();
         }
         this_class->connect_lock.unlock();
@@ -479,12 +481,9 @@ bool server::server_connect()
 
         send_sn=0;
         heart_beat_set(0);
-        std::unique_lock<std::mutex> mlock(mutex_connect);
         connect_lock.lock();
         connect_state=CONNECTED;
         connect_lock.unlock();
-        mlock.unlock();
-        cond_connect.notify_all();
     }
 
     DGDBG("id =%d server_connect exit \n",id);

@@ -353,6 +353,9 @@ void command_process::rcv_comm_process(MSG_COM Msg)
             {
                 encrypt_code_resolv();
                 *get_encrypt_state=true;
+                std::unique_lock<std::mutex> mlock(*mutex_rcv_encrpt);
+                mlock.unlock();
+                cond_rcv_encrpt->notify_all();
                 DGDBG("rcv_comm_process,command=encrypt,socket_id=%d,encry_rcv_len=%d",command.socket_id,encry_rcv_len);
                 //for(unsigned int i=0;i<encry_rcv_len;i++)
                 //    printf("%x ",encry_data[i]);

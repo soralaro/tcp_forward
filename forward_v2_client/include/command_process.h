@@ -55,6 +55,8 @@ public:
    unsigned  char encryp_key;
    unsigned char *encry_data;
    unsigned int encry_rcv_len;
+    std::mutex *mutex_rcv_encrpt;
+    std::condition_variable *cond_rcv_encrpt;
 private:
     COMMANT command;
     int commant_cur;

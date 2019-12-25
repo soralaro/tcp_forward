@@ -85,8 +85,8 @@ private:
     std::mutex idel_time_mutex;
     int idel_time;
 private:
-    std::mutex mutex_connect;
-    std::condition_variable cond_connect;
+    std::mutex mutex_rcv_encrpt;
+    std::condition_variable cond_rcv_encrpt;
     std::mutex mutex_notic_connect;
     std::condition_variable cond_notic_connect;
 };
