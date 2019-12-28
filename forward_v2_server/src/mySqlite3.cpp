@@ -14,7 +14,14 @@ enum class tbl_field
     psw,
     forbid,
     start_date,
-    end_date
+    end_date,
+    e_mail,
+    phone,
+    qq,
+    webchat,
+    name,
+    comment,
+    dev
 };
 mySqlite3::mySqlite3()
 {
@@ -37,7 +44,7 @@ int mySqlite3::connect()
     }
     else
     {
-        printf("Opened database successfully\n");
+        //printf("Opened database successfully\n");
         return 1;
     }
 }
@@ -46,13 +53,15 @@ static int mySqlite3::callback(void *data, int argc, char **argv, char **azColNa
 {
     int i;
     mySqlite3 *mysql=(mySqlite3 *)data;
-    // for(i=0; i<argc; i++)
-    // {
-    //   printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-    // }
+    for(i=0; i<argc; i++)
+     {
+      // printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+     }
     if(argc>6)
     {
         int forbid=atoi(argv[(int)(tbl_field::forbid)]);
+        mysql->dev=atoi(argv[(int)(tbl_field::dev)]);
+       // printf("mysql->dev=%d\n",mysql->dev);
         //printf("forbid=%d\n",forbid);
         if(forbid==1)
         {
@@ -94,7 +103,7 @@ static int mySqlite3::callback(void *data, int argc, char **argv, char **azColNa
    return 0;
 }
 
-int mySqlite3::query_expire(int usr_id)
+int mySqlite3::query_expire(int usr_id,int &dev_limit)
 {
     int ret;
     char *zErrMsg = 0;
@@ -108,10 +117,12 @@ int mySqlite3::query_expire(int usr_id)
 
     /* Execute SQL statement */
     expire=0;
+    dev=0;
     rc = sqlite3_exec(conn, sql.c_str(), mySqlite3::callback, (void*)this, &zErrMsg);
 
     if( rc != SQLITE_OK ){
-      fprintf(stderr, "SQL error: %s\n", zErrMsg);
+     // fprintf(stderr, "SQL error: %s\n", zErrMsg);
+      printf( "SQL error: \n");
       sqlite3_free(zErrMsg);
    }
    else
@@ -119,5 +130,6 @@ int mySqlite3::query_expire(int usr_id)
       //fprintf(stdout, "Operation done successfully\n");
    }
    sqlite3_close(conn);
+   dev_limit=dev;
    return expire;
 }

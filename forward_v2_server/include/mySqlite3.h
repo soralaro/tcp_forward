@@ -17,7 +17,7 @@ public:
     mySqlite3();
     ~mySqlite3();
     int connect();
-    int query_expire(int usr_id);
+    int query_expire(int usr_id,int &dev_limit);
 private:
 	static int callback(void *data, int argc, char **argv, char **azColName);
     sqlite3 *conn;
@@ -28,6 +28,7 @@ private:
     std::mutex mutex_;
     std::condition_variable cond_;
     int expire ;
+    char dev;
 
 };
 #endif //GFW_SQLITE3_H

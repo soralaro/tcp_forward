@@ -327,9 +327,12 @@ void command_process::rcv_comm_process(MSG_COM Msg)
         }
         case (unsigned int )socket_command::exceed_max_device:
         {
-            printf("You have exeeded the max device. The number of online device is 5.\n");
-            sleep(5);
-            exit(0);
+            if(Msg.size>0) {
+                int dev_limit=((char *)Msg.msg)[0];
+                printf("You have exeeded the max device. The limit number of online device is %d\n",dev_limit);
+                sleep(5);
+                exit(0);
+            }
             break;
         }
         case (unsigned int )socket_command::dst_connetc:
