@@ -314,7 +314,7 @@ void server::server_rcv(void *arg) {
 
 void  server::forward(void *arg) {
     server *this_class = (server *)arg;
-    unsigned  char ex_buf[128];
+    unsigned  char ex_buf[256];
     std::unique_lock<std::mutex> mlock(this_class->mutex_forward_start);
     while (!this_class->destroy) {
         this_class->cond_forward_start.wait(mlock);
@@ -393,7 +393,7 @@ void  server::forward(void *arg) {
                 DGERR("command size=%d,ex_size=%d",commant.size,commant.ex_size);
                 if(ret>0)
                 {
-                    int ex_len=0x7f&commant.ex_size;
+                    int ex_len=0xff&commant.ex_size;
                     for(int i=0;i<ex_len;i++)
                     {
                         ex_buf[i]=rand();

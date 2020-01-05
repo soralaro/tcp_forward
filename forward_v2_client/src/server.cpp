@@ -228,7 +228,7 @@ void server::timer_fuc(void *arg)
 }
 void  server::server_forward(void *arg) {
     server *this_class = (server *)arg;
-    unsigned  char ex_buf[128];
+    unsigned  char ex_buf[256];
 #ifndef  _WIN64    
     signal(SIGPIPE, SIG_IGN);
 #endif
@@ -306,7 +306,7 @@ void  server::server_forward(void *arg) {
             int ret = send_all(this_class->server_socket, buf, ALIGN_16(Msg.size));
             if(ret>0)
             {
-                int ex_len=0x7f&commant.ex_size;
+                int ex_len=0xff&commant.ex_size;
                 for(int i=0;i<ex_len;i++)
                 {
                     ex_buf[i]=rand();
