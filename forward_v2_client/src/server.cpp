@@ -382,7 +382,7 @@ void server::server_rcv(void *arg) {
             {
                 DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
                 this_class->connect_lock.lock();
-                if(this_class->connect_state==CONECTED)
+                if(this_class->connect_state==CONNECTED)
                     this_class->connect_state=0;
                 this_class->connect_lock.unlock();
             }
