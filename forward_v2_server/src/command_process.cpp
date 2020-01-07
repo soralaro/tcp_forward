@@ -135,7 +135,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     buf += sizeof(command);
                     pro_len -= sizeof(command);
 
-                    if((ALIGN_16(command.size)+command.ex_size)>sizeof(command)) {
+                    if(ALIGN_16(command.size+command.ex_size)>sizeof(command)) {
                         state = com_head_rcv_end;
                         commant_cur = sizeof(command);
                         DGDBG(" command_process state = com_head_rcv_end pro_len=%d",pro_len);
@@ -166,7 +166,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     buf += head_remain;
                     pro_len -= head_remain;
                     DGDBG(" command_process state = com_head_rcv_end");
-                    if((ALIGN_16(command.size)+command.ex_size)>sizeof(command)) {
+                    if(ALIGN_16(command.size+command.ex_size)>sizeof(command)) {
                         state = com_head_rcv_end;
                         commant_cur = sizeof(command);
                     } else
@@ -184,7 +184,7 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                 break;
             }
             case com_head_rcv_end: {
-                unsigned int commant_remain = ALIGN_16(command.size) - sizeof(command);
+                unsigned int commant_remain = ALIGN_16(command.size+command.ex_size) - sizeof(command);
                 if (pro_len >= commant_remain) {
                     Msg.size = commant_remain;
                     des_decrypt_3(buf,commant_remain);
@@ -195,13 +195,8 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                     Msg.size = command.size-sizeof(command);
                     buf += commant_remain;
                     pro_len -= commant_remain;
-                    if(command.ex_size==0) {
-                        commant_cur = 0;
-                        state = com_wait_star;
-                    } else{
-                        commant_cur +=commant_remain;
-                        state = com_data_rcv_end;
-                    }
+                    commant_cur = 0;
+                    state = com_wait_star;
                     DGDBG(" command_process state = com_wait_star,pro_len=%d",pro_len);
 
                 } else {
@@ -214,67 +209,26 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
                 break;
             }
             case com_data_rcv: {
-                unsigned int commant_remain = ALIGN_16(command.size) - commant_cur;
+                unsigned int commant_remain = ALIGN_16(command.size+command.ex_size) - commant_cur;
                 if (pro_len >= commant_remain) {
                     memcpy(command_Buf+commant_cur-sizeof(command),buf,commant_remain);
-                    des_decrypt_3(command_Buf, ALIGN_16(command.size)-sizeof(command));
-                    des_decrypt_2(command_Buf, ALIGN_16(command.size)-sizeof(command));
+                    des_decrypt_3(command_Buf, ALIGN_16(command.size+command.ex_size)-sizeof(command));
+                    des_decrypt_2(command_Buf, ALIGN_16(command.size+command.ex_size)-sizeof(command));
                     data_encrypt(command_Buf,sizeof(command),command.size-sizeof(command));
                     Msg.type = MSG_TPY::msg_server_rcv;
                     Msg.msg = command_Buf;
                     Msg.size = command.size-sizeof(command);
                     buf += commant_remain;
                     pro_len -= commant_remain;
-                    if(command.ex_size==0)
-                    {
-                        commant_cur = 0;
-                        state=com_wait_star;
-                        DGDBG(" command_process state = com_wait_star pro_len=%d",pro_len);
-                    } else {
-                        commant_cur +=commant_remain;
-                        state = com_data_rcv_end;
-                        DGDBG(" command_process state = com_data_rcv_end pro_len=%d",pro_len);
-                    }
+                    commant_cur = 0;
+                    state=com_wait_star;
+                    DGDBG(" command_process state = com_wait_star pro_len=%d",pro_len);
                 } else {
                     memcpy(command_Buf+commant_cur-sizeof(command),buf,pro_len);
                     commant_cur += pro_len;
                     pro_len = 0;
                     DGDBG(" command_process state = com_data_rcv ");
                     state = com_data_rcv;
-                }
-                break;
-            }
-            case com_data_rcv_end: {
-                Msg.type=MSG_TPY::msg_ext_data;
-                unsigned int ex_data_remain=command.ex_size;
-                if (pro_len >= ex_data_remain) {
-                    buf+=ex_data_remain;
-                    pro_len-=ex_data_remain;
-                    state = com_wait_star;
-                    commant_cur=0;
-                    DGDBG(" command_process state = com_wait_star pro_len=%d",pro_len);
-                } else{
-                    commant_cur+=pro_len;
-                    pro_len=0;
-                    state=com_ext_rcv;
-                    DGDBG(" command_process state = com_ext_rcv ");
-                }
-                break;
-            }
-            case com_ext_rcv: {
-                Msg.type=MSG_TPY::msg_ext_data;
-                unsigned int ex_data_remain=command.ex_size+ALIGN_16(command.size)-commant_cur;
-                if (pro_len >= ex_data_remain) {
-                    buf+=ex_data_remain;
-                    pro_len-=ex_data_remain;
-                    state = com_wait_star;
-                    commant_cur=0;
-                    DGDBG(" command_process state = com_wait_star pro_len=%d",pro_len);
-                } else{
-                    commant_cur+=pro_len;
-                    pro_len=0;
-                    DGDBG(" command_process state = com_ext_rcv ");
-                    state=com_ext_rcv;
                 }
                 break;
             }

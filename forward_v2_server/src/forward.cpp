@@ -104,8 +104,8 @@ void forward::server_rcv(void *arg) {
             }
         }
         while (!this_class->end_) {
-            char *buffer = new char[BUFFER_SIZE];
-            int len = recv(this_class->server_socket, buffer+sizeof(COMMANT), BUFFER_SIZE-sizeof(COMMANT)-8, 0);
+            char *buffer = new char[BUFFER_SIZE+EX_SIZE+1];
+            int len = recv(this_class->server_socket, buffer+sizeof(COMMANT), BUFFER_SIZE-sizeof(COMMANT), 0);
             if (len > 0) {
                  DGDBG("client recv len%d\n", len);
                 if(this_class->q_client_msg==NULL)
@@ -146,7 +146,7 @@ void forward::server_rcv(void *arg) {
         if(this_class->q_client_msg!=NULL) {
             MSG Msg;
             Msg.type = MSG_TPY::msg_socket_end;
-            char *buffer = new char[BUFFER_SIZE];
+            char *buffer = new char[BUFFER_SIZE+EX_SIZE];
             Msg.socket_id = this_class->id;
             Msg.msg = buffer;
             Msg.size = sizeof(COMMANT);
@@ -195,7 +195,7 @@ int forward::send_all(MSG Msg)
             {
                 MSG Msg;
                 Msg.type = MSG_TPY::msg_socket_end;
-                char *buffer = new char[BUFFER_SIZE];
+                char *buffer = new char[BUFFER_SIZE+EX_SIZE];
                 Msg.socket_id = id;
                 Msg.msg = buffer;
                 Msg.size = sizeof(COMMANT);

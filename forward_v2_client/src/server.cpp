@@ -216,7 +216,7 @@ void server::timer_fuc(void *arg)
                 commant.size=sizeof(COMMANT);
                 commant.socket_id=2;
                 commant.com=(unsigned int)socket_command::heart_beat;
-                unsigned  char *buf=new unsigned char [sizeof(COMMANT)];
+                unsigned  char *buf=new unsigned char [sizeof(COMMANT)+EX_SIZE];
                 memcpy(buf,&commant,sizeof(commant));
                 Msg.msg=buf;
                 this_class->q_client_msg.push(Msg);
@@ -228,8 +228,7 @@ void server::timer_fuc(void *arg)
 }
 void  server::server_forward(void *arg) {
     server *this_class = (server *)arg;
-    unsigned  char ex_buf[256];
-#ifndef  _WIN64    
+#ifndef  _WIN64
     signal(SIGPIPE, SIG_IGN);
 #endif
     std::unique_lock<std::mutex> mlock(this_class->mutex_rcv_encrpt);
@@ -289,9 +288,9 @@ void  server::server_forward(void *arg) {
             DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ", commant.size, commant.sn, commant.socket_id,
                   commant.com);
             memcpy(buf, &commant, sizeof(commant));
-            int align_len=ALIGN_16(Msg.size)-Msg.size;
+            int ex_len=0xff&commant.ex_size;
             unsigned char *p=(unsigned char *)(buf+Msg.size);
-            for(int i=0;i<align_len;i++)
+            for(int i=0;i<ex_len;i++)
             {
                 p[i]=rand();
             }
@@ -301,18 +300,9 @@ void  server::server_forward(void *arg) {
           
             des_encrypt_3((unsigned char *)buf,sizeof(commant));
 
-            des_encrypt_2((unsigned char *)buf+sizeof(commant),ALIGN_16(Msg.size-sizeof(commant)));
-            des_encrypt_3((unsigned char *)buf+sizeof(commant),ALIGN_16(Msg.size-sizeof(commant)));
-            int ret = send_all(this_class->server_socket, buf, ALIGN_16(Msg.size));
-            if(ret>0)
-            {
-                int ex_len=0xff&commant.ex_size;
-                for(int i=0;i<ex_len;i++)
-                {
-                    ex_buf[i]=rand();
-                }
-                ret = send_all(this_class->server_socket, (char *)ex_buf, ex_len);
-            }
+            des_encrypt_2((unsigned char *)buf+sizeof(commant),ALIGN_16(Msg.size-sizeof(commant)+ex_len));
+            des_encrypt_3((unsigned char *)buf+sizeof(commant),ALIGN_16(Msg.size-sizeof(commant)+ex_len));
+            int ret = send_all(this_class->server_socket, buf, ALIGN_16(Msg.size+ex_len));
 
             delete[] buf;
             if (ret < 0) {
@@ -360,9 +350,9 @@ void server::server_rcv(void *arg) {
         } else {
             this_class->connect_lock.unlock();
         }
-        static char buffer[BUFFER_SIZE+1];
+        static char buffer[BUFFER_SIZE+EX_SIZE+1];
         DGDBG("id=%d server waiting rcv! \n",this_class->id);
-        int len = recv(this_class->server_socket, buffer,BUFFER_SIZE, 0);
+        int len = recv(this_class->server_socket, buffer,BUFFER_SIZE+EX_SIZE, 0);
         if (len > 0) {
              DGDBG("server recv len%d\n", len);
 

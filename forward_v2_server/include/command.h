@@ -5,6 +5,7 @@
 #ifndef GFW_COMMAND_H
 #define GFW_COMMAND_H
 #define BUFFER_SIZE 1024
+#define EX_SIZE 272
 #define ONE_USER_MAX_DEVICE 5
 
 enum class socket_command
