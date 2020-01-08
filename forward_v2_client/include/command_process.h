@@ -61,7 +61,7 @@ private:
     COMMANT command;
     int commant_cur;
     COMMANT_STATE  state;
-    u_char  command_Buf[BUFFER_SIZE+sizeof(COMMANT)+1];
+    u_char  command_Buf[BUFFER_SIZE+sizeof(COMMANT)+EX_SIZE+1];
     std::map <unsigned int,forward *> mforward;
     unsigned  int current_max_socket_id;
     BlockQueue<MSG_COM> *q_client_msg;
