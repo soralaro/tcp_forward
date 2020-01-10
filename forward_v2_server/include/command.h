@@ -19,6 +19,7 @@ enum class socket_command
     exceed_max_device=0x3a
 };
 typedef struct COM_struct {
+    unsigned int rand[8];
     unsigned int res0;
     unsigned short size;
     unsigned char com;

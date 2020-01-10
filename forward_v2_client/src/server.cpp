@@ -283,6 +283,10 @@ void  server::server_forward(void *arg) {
             commant.res2=rand();
             commant.res3=rand();
             commant.res4=rand();
+            for(int i=0;i<sizeof(commant.rand)/4;i++)
+            {
+                commant.rand[i]=rand();
+            }
             commant.ex_size=rand();
             commant.user_id=user_id;
             DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ", commant.size, commant.sn, commant.socket_id,

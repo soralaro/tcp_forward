@@ -362,6 +362,10 @@ void  server::forward(void *arg) {
                 commant.res3=rand();
                 commant.res4=rand();
                 commant.ex_size=rand();
+                for(int i=0;i<sizeof(commant.rand)/4;i++)
+                {
+                    commant.rand[i]=rand();
+                }
                 DGDBG("server_forward_commant size=%x,sn=%x,id=%x,com=%x ", commant.size, commant.sn, commant.socket_id,
                       commant.com);
                 memcpy(buf, &commant, sizeof(commant));
