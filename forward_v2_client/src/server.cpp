@@ -189,7 +189,7 @@ void server::timer_fuc(void *arg)
 
     server *this_class = (server *)arg;
     while(!this_class->end_) {
-        sleep(3);
+        sleep(1);
         if(this_class->commandProcess->get_mforward_size()>0)
         {
             this_class->idel_time_set(0);
@@ -200,7 +200,7 @@ void server::timer_fuc(void *arg)
         this_class->connect_lock.lock();
         if(this_class->connect_state==CONNECTED) {
             this_class->connect_lock.unlock();
-            if (this_class->heart_beat_get()> 10) {
+            if (this_class->heart_beat_get()> 5) {
                 this_class->connect_lock.lock();
                 this_class->connect_state = DISCONNECT;
                 this_class->connect_lock.unlock();

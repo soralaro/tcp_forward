@@ -11,11 +11,14 @@
 #define SERVER_IP "127.0.0.1"
 #define MAX_CONNECT 1000
 #define MAX_DEVICE 500
+#define MAX_PORT   10
 #define ENCRYP_KEY  0Xff
 #define ENCRYP_KEY_2  0Xff
 #define DES_KEY     "qwertyuiopasdfgh"
 #define DES_KEY2    "qwertyuiopasdfgh"
 #define DES_KEY3    "qwertyuiopasdfgh"
+
+void listen_proc(void *port);
 
 char* getCmdOption(char ** begin, char ** end, const std::string & option)
 {
@@ -89,14 +92,15 @@ int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::st
     }
     return 0;
 }
+static unsigned char encryp_key=ENCRYP_KEY;
+static unsigned char encryp_key_2=ENCRYP_KEY_2;
 int main(int argc, char** argv) {
     signal(SIGPIPE, SIG_IGN);
     int local_port=LOCAL_PORT;
     int server_port=SERVER_PORT;
     std::string server_ip=SERVER_IP;
     int max_connect=MAX_CONNECT;
-    unsigned char encryp_key=ENCRYP_KEY;
-    unsigned char encryp_key_2=ENCRYP_KEY_2;
+
     int max_device=MAX_DEVICE;
     char *default_des_key =DES_KEY;
     char *default_des_key_2 =DES_KEY2;
@@ -109,7 +113,7 @@ int main(int argc, char** argv) {
     memcpy(des_key_3,default_des_key_3,sizeof(des_key_3));
     cmdParse(argc, argv, local_port, server_port, server_ip, max_connect, encryp_key, encryp_key_2,max_device,des_key,des_key_2,des_key_3);
     forward::setKey(encryp_key);
-    ThreadPool::pool_init(max_connect+max_device*3);
+    ThreadPool::pool_init(max_connect+max_device*3+MAX_PORT);
     server::server_pool_int(max_device);
     server::setDesKey(des_key);
     server::setDesKey_2(des_key_2);
@@ -119,8 +123,27 @@ int main(int argc, char** argv) {
     servaddr.sin_port = htons(server_port);  ///服务器端口
     servaddr.sin_addr.s_addr = inet_addr(server_ip.c_str());  ///服务器ip
     forward::forward_pool_int(max_connect,servaddr);
+    int local_port_v[MAX_PORT];
+    for(int i=0;i<MAX_PORT;i++) {
+        local_port_v[i]=local_port+i;
+        ThreadPool::pool_add_worker(listen_proc, local_port_v+i);
+    }
+    DGDBG("sleep 10");
+    sleep(10);
+    DGDBG("pool_destroy");
+    ThreadPool::pool_destroy();
+    DGDBG("forward_pool_destroy");
+    forward::forward_pool_destroy();
+    DGDBG("server_pool_destroy");
+    server::server_pool_destroy();
+    return 0;
+}
+
+void listen_proc(void *port)
+{
     int conn;
     int ss = socket(AF_INET, SOCK_STREAM, 0);
+    int local_port=*((int *)port);
     struct sockaddr_in local_sockaddr;
     local_sockaddr.sin_family = AF_INET;
     local_sockaddr.sin_port = htons(local_port);
@@ -137,7 +160,7 @@ int main(int argc, char** argv) {
     struct sockaddr_in client_addr;
     socklen_t length = sizeof(client_addr);
     while(1) {
-        printf("waiting for connet!\n");
+        printf("waiting for connet! port=%d\n",local_sockaddr.sin_port);
         conn = accept(ss, (struct sockaddr *) &client_addr, &length);
         if (conn < 0) {
             perror("connect");
@@ -179,8 +202,5 @@ int main(int argc, char** argv) {
         }
     }
     close(ss);
-    ThreadPool::pool_destroy();
-    forward::forward_pool_destroy();
-    server::server_pool_destroy();
-    return 0;
 }
+

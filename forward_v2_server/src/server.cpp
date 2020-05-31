@@ -237,7 +237,7 @@ void server::timer_fuc(void *arg)
 {
     server *this_class = (server *)arg;
     while(!this_class->destroy) {
-        sleep(3);
+        sleep(1);
         if(!this_class->end_) {
             this_class->heart_beat++;
             this_class->connect_exist_time++;
@@ -250,7 +250,7 @@ void server::timer_fuc(void *arg)
                 this_class->q_client_msg.push(msg);
                 this_class->connect_exist_time=0;
             }
-            if (this_class->heart_beat > 10)
+            if (this_class->heart_beat > 5)
             {
                 this_class->end_= true;
                 this_class->heart_beat=0;
