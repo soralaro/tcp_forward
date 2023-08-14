@@ -255,6 +255,7 @@ void server::timer_fuc(void *arg)
                 this_class->end_= true;
                 this_class->heart_beat=0;
             }
+#if 0
             else
                 {
                 MSG Msg;
@@ -270,6 +271,7 @@ void server::timer_fuc(void *arg)
                 Msg.msg=buf;
                 this_class->q_client_msg.push(Msg);
             }
+#endif
         }
     }
 }
