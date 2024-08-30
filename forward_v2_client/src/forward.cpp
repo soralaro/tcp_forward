@@ -2,7 +2,7 @@
 // Created by czx on 18-12-16.
 //
 
-#include"omp.h"
+//#include"omp.h"
 #include "../include/forward.h"
 
 std::vector<forward *> forward::forward_Pool;
@@ -71,6 +71,7 @@ void forward::release()
     close(client_socket);
     client_socket=-1;
     DGDBG("id=%d forward release end !\n",id);
+    printf("id=%d forward release end !\n",id);
     id=0;
     free=true;
 }
@@ -129,13 +130,19 @@ void forward::client_rcv(void *arg) {
                     usleep(1000);
                 }
 #else
-                struct tcp_info info;
-
+                //struct tcp_info info;
+                struct tcp_connection_info info;
                 int info_len=sizeof(info);
 
-                getsockopt(this_class->client_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
-                if(info.tcpi_state!=TCP_ESTABLISHED)
+                //getsockopt(this_class->client_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
+                getsockopt(this_class->client_socket, IPPROTO_TCP, TCP_CONNECTION_INFO, &info, (socklen_t *)&info_len);
+                //if(info.tcpi_state!=TCP_ESTABLISHED)
+                //if(info.tcpi_state!=0)
+                if(info.tcpi_state!=0)
+                    printf("info.tcpi_state=%d id=%d\n",info.tcpi_state,this_class->id);
+                if(info.tcpi_state==6||info.tcpi_state==5)
                 {
+                    printf("info.tcpi_state=%d id=%d\n",info.tcpi_state,this_class->id);
                     DGDBG("id =%d client tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
                     break;
                 }

@@ -44,7 +44,7 @@ class command_process
 public:
     command_process(BlockQueue<MSG_COM> *q_msg);
     ~command_process();
-   void  process(unsigned char *data_in, unsigned int len);
+   void  process(unsigned char *data_in, unsigned int len, bool &is_heart_beat);
    void  erease_mforward(unsigned int sockeid);
    bool check_mforward_exist(unsigned int socketid);
    void  add_mforward(forward * Forward);
@@ -65,7 +65,7 @@ private:
     std::map <unsigned int,forward *> mforward;
     unsigned  int current_max_socket_id;
     BlockQueue<MSG_COM> *q_client_msg;
-    void rcv_comm_process(MSG_COM Msg);
+    void rcv_comm_process(MSG_COM Msg,bool &is_heart_beat);
     void data_encrypt(unsigned char *buf, unsigned int cur,int len);
     void encrypt_code_resolv();
 };

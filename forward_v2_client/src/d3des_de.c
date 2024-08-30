@@ -14,6 +14,7 @@
 
 #include "stdlib.h"
 #include "d3des_de.h"
+#include "d3des.h"
 typedef union {
 	unsigned long blok[2];
 	unsigned short word[4];

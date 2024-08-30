@@ -2,7 +2,7 @@
 // Created by czx on 18-12-16.
 //
 
-#include"omp.h"
+//#include"omp.h"
 #include "../include/server.h"
 #include "encrypt.h"
 
@@ -206,6 +206,7 @@ void server::timer_fuc(void *arg)
                 this_class->connect_lock.unlock();
                 this_class->heart_beat_set(0);
                 DGERR("heart_beat time out!");
+                printf("heart_beat time out!\n");
             } else if(this_class->idel_time_get()<IDEL_TIME_MAX)
             {
                 MSG_COM Msg;
@@ -358,9 +359,10 @@ void server::server_rcv(void *arg) {
         DGDBG("id=%d server waiting rcv! \n",this_class->id);
         int len = recv(this_class->server_socket, buffer,BUFFER_SIZE+EX_SIZE, 0);
         if (len > 0) {
-             DGDBG("server recv len%d\n", len);
-
-            this_class->commandProcess->process((unsigned char*)buffer,len);
+            DGDBG("server recv len%d\n", len);
+            bool is_heart_beat=true; 
+            this_class->commandProcess->process((unsigned char*)buffer,len,is_heart_beat);
+            //if(!is_heart_beat)
             this_class->heart_beat_set(0);
         }
         else
@@ -381,14 +383,17 @@ void server::server_rcv(void *arg) {
                 this_class->connect_lock.unlock();
             }
 #else
-            struct tcp_info info;
-
+            //struct tcp_info info;
+            struct tcp_connection_info info;
             int info_len=sizeof(info);
 
-            getsockopt(this_class->server_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
-            if(info.tcpi_state!=TCP_ESTABLISHED)
+            //getsockopt(this_class->server_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
+            getsockopt(this_class->server_socket, IPPROTO_TCP, TCP_CONNECTION_INFO, &info, (socklen_t *)&info_len);
+            //if(info.tcpi_state!=TCP_ESTABLISHED)
+            if(info.tcpi_state==0)
             {
                DGDBG("id =%d tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
+               printf("disconnect id %d",this_class->id);
                this_class->connect_lock.lock();
                if(this_class->connect_state==CONNECTED)
                     this_class->connect_state=DISCONNECT;

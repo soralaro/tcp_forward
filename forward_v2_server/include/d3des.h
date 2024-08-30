@@ -6,7 +6,6 @@
  * Copyright (c) 1988,1989,1990,1991,1992 by Richard Outerbridge
  *	(GEnie : OUTER; CIS : [71755,204])
  */
-
 #define D2_DES		/* include double-length support */
 //#define D3_DES		/* include triple-length support */
 
@@ -50,7 +49,6 @@ extern "C" {
  */
 
 #ifdef D2_DES
-
 #define desDkey(a,b)	des2key((a),(b))
 extern void des2key(unsigned char *, short);
 /*		      hexkey[16]     MODE

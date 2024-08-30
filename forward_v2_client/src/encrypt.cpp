@@ -107,6 +107,9 @@ void des_decrypt(unsigned char *buf,int size)
 }
 void des_encrypt_2(unsigned char *buf,int size)
 {
+#ifdef SIMPLEDES
+    return;
+#endif
     if(size==0)
     {
         return;
@@ -129,6 +132,9 @@ void des_encrypt_2(unsigned char *buf,int size)
 }
 void des_decrypt_2(unsigned char *buf,int size)
 {
+#if SIMPLEDES
+    return;
+#endif
     if(size==0)
     {
         return;
@@ -152,6 +158,9 @@ void des_decrypt_2(unsigned char *buf,int size)
 
 void des_encrypt_3(unsigned char *buf,int size)
 {
+#if SIMPLEDES
+    return;
+#endif
     if(size==0)
     {
         return;
@@ -186,6 +195,9 @@ void des_encrypt_3(unsigned char *buf,int size)
 }
 void des_decrypt_3(unsigned char *buf,int size)
 {
+#if SIMPLEDES
+    return;
+#endif
     if(size==0)
     {
         return;

@@ -48,7 +48,7 @@ extern "C" {
  * internal key register) one block of eight bytes at address 'from'
  * into the block at address 'to'.  They can be the same.
  */
-
+#define D2_DES
 #ifdef D2_DES
 
 #define desDkey(a,b)	des2key((a),(b))

@@ -107,7 +107,7 @@ void command_process::relase()
     encry_rcv_len=0;
 }
 
-void command_process::process(unsigned char *data_in, unsigned int len) {
+void command_process::process(unsigned char *data_in, unsigned int len,bool &is_Heart_beat) {
 
     unsigned char *buf=data_in;
     unsigned int   pro_len=len;
@@ -225,14 +225,17 @@ void command_process::process(unsigned char *data_in, unsigned int len) {
             }
         }
         if((state!=com_head_rcv)&&(Msg.type!=MSG_TPY::msg_ext_data))
-            rcv_comm_process(Msg);
+            rcv_comm_process(Msg,is_Heart_beat);
     }
 }
 
-void command_process::rcv_comm_process(MSG_COM Msg)
+void command_process::rcv_comm_process(MSG_COM Msg,bool &is_Heart_beat)
 {
     auto iter=mforward.find(command.socket_id);
     DGDBG("rcv_comm_process_HEAD size=%x,sn=%x,id=%x,com=%x ",command.size,command.sn,command.socket_id,command.com);
+    if(command.com!=(unsigned char)socket_command::heart_beat){
+        is_Heart_beat=false;
+    }
     switch(command.com)
     {
         case (unsigned int )socket_command::Data:
@@ -267,6 +270,7 @@ void command_process::rcv_comm_process(MSG_COM Msg)
         case (unsigned int )socket_command::connect:
         {
             DGDBG("rcv_comm_process,command=connect,socket_id=%d",command.socket_id);
+            printf("rcv_comm_process,command=connect,socket_id=%d\n",command.socket_id);
             break;
         }
         case (unsigned int )socket_command::user_expire:
@@ -289,6 +293,7 @@ void command_process::rcv_comm_process(MSG_COM Msg)
         case (unsigned int )socket_command::dst_connetc:
         {
             DGDBG("rcv_comm_process,command=dst_connetc,socket_id=%d",command.socket_id);
+            printf("rcv_comm_process,command=dst_connetc,socket_id=%d\n",command.socket_id);
             if(iter!=mforward.end())
             {
                 DGDBG("rcv_comm_process,mforward.erase,iter->first=%d",iter->first);
@@ -317,6 +322,9 @@ void command_process::rcv_comm_process(MSG_COM Msg)
             }
             break;
         }
+        case (unsigned int )socket_command::heart_beat:
+            //printf("rcv heart_beat\n");
+            break;
         default:
         {
             DGDBG("rcv_comm_process,command=default=%x,command.size=%x,socket_id=%x",command.com,command.size,command.socket_id);
