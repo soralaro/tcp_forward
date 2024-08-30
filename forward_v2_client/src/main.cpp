@@ -8,6 +8,9 @@
 #include<winsock2.h>
 #include<ws2tcpip.h>
 #endif
+#if ANDROID
+#include <jni.h>
+#endif
 #define ListenQueue 200
 
 #define LOCAL_PORT 7102
@@ -93,6 +96,11 @@ int cmdParse(int argc, char * argv[], int& local_port, int& server_port, std::st
 #endif
     return 0;
 }
+#if ANDROID
+    jint TcpForwardStart(){
+        return 11;
+    }
+#else
 int main(int argc, char** argv) {
 #ifdef _WIN64
     WORD winSocketVersion;
@@ -219,3 +227,4 @@ int main(int argc, char** argv) {
 #endif
     return 0;
 }
+#endif //if ANDROID

@@ -4,10 +4,13 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
 link_directories(${CMAKE_CURRENT_LIST_DIR}/lib)
 file(GLOB_RECURSE cpp_files "*.cpp")
 file(GLOB_RECURSE c_files "*.c")
+if(ANDROID)
+add_library(${TARGET_NAME} ${cpp_files} ${c_files})
+else()
 add_executable(${TARGET_NAME} ${cpp_files} ${c_files})
+endif(ANDROID)
 IF(WINDOWS)
 target_link_libraries(${TARGET_NAME} -lws2_32 -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic)
-
 endif(WINDOWS)
 
 

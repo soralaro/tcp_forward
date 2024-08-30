@@ -136,6 +136,7 @@ void forward::client_rcv(void *arg) {
                 getsockopt(this_class->client_socket, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&info_len);
                 if(info.tcpi_state!=TCP_ESTABLISHED)
                 {
+                    printf("id =%d client tcpi_state=%d \n",this_class->id,info.tcpi_state);
                     DGDBG("id =%d client tcpi_state!=TCP_ESTABLISHED) \n",this_class->id);
                     break;
                 }
